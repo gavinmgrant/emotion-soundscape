@@ -23,7 +23,7 @@ const EmotionInput = ({
 }: EmotionInputProps) => {
   const step = 0.025
   return (
-    <div className="flex flex-col gap-4 mt-4 m-4 w-full sm:w-1/2 max-w-lg msx-4">
+    <div className="flex flex-col gap-3 w-full sm:w-1/2 max-w-lg p-3">
       <Button onClick={handleToggleAudio}>
         {isAudioEnabled ? "Stop Audio" : "Start Audio"}
       </Button>
