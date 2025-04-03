@@ -52,7 +52,7 @@ const EmotionInput = ({
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="flex flex-col gap-3 w-full sm:w-1/2 max-w-lg p-3">
+    <div className="absolute bottom-0 flex flex-col gap-3 w-full sm:w-1/2 max-w-md bg-black backdrop-blur-md rounded-lg p-3 m-3">
       <Popover open={open} onOpenChange={setOpen}>
         <PopoverTrigger asChild>
           <Button

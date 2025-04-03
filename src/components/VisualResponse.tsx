@@ -231,11 +231,14 @@ const VisualResponsePlane = () => {
         setIsAudioEnabled(false)
         return
       }
-      await transport.start()
+
+      // Start the audio context first
+      await Tone.start()
+      await Tone.getContext().resume()
 
       // Set up the transport
       transport.bpm.value = 120
-      transport.start()
+      await transport.start()
 
       setIsAudioEnabled(true)
     } catch (error) {
@@ -244,7 +247,10 @@ const VisualResponsePlane = () => {
   }
 
   return (
-    <div className="flex flex-col items-center justify-center text-white h-screen w-screen">
+    <div className="relative flex flex-col items-center justify-center text-white h-dvh w-screen">
+      <h1 className="absolute top-0 text-lg sm:text-xl font-semibold px-3 py-2 m-3 text-center rounded-lg z-10 bg-black backdrop-blur-md">
+        Emotion Soundscape
+      </h1>
       <Canvas className="w-full" camera={{ position: [0, 0, 20], fov: 30 }}>
         <OrbitControls
           minAzimuthAngle={0}
