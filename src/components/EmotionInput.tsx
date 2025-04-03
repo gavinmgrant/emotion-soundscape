@@ -58,7 +58,7 @@ const EmotionInput = ({
     <AnimatePresence>
       {showControls && (
         <motion.div
-          className="absolute bottom-0 flex flex-col gap-3 w-full sm:w-1/2 max-w-md p-3"
+          className="absolute bottom-0 flex w-full max-w-md flex-col gap-3 p-3 sm:w-1/2"
           initial={{ opacity: 0, y: 240 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: 240 }}
@@ -75,13 +75,13 @@ const EmotionInput = ({
                 {emotion
                   ? emotions.find(
                       (emo: { value: string; label: string }) =>
-                        emo.value === emotion
+                        emo.value === emotion,
                     )?.label
                   : "Select an emotion..."}
                 <ChevronsUpDown className="opacity-50" />
               </Button>
             </PopoverTrigger>
-            <PopoverContent className="w-full my-2 p-0">
+            <PopoverContent className="my-2 w-full p-0">
               <Command>
                 <CommandInput
                   placeholder="Search emotions..."
@@ -96,7 +96,7 @@ const EmotionInput = ({
                         value={emo.value}
                         onSelect={(currentEmotion: string) => {
                           setEmotion(
-                            currentEmotion === emotion ? "" : currentEmotion
+                            currentEmotion === emotion ? "" : currentEmotion,
                           )
                           setOpen(false)
                         }}
@@ -105,7 +105,7 @@ const EmotionInput = ({
                         <Check
                           className={cn(
                             "ml-auto",
-                            emotion === emo.value ? "opacity-100" : "opacity-0"
+                            emotion === emo.value ? "opacity-100" : "opacity-0",
                           )}
                         />
                       </CommandItem>
@@ -126,7 +126,7 @@ const EmotionInput = ({
               <span className="flex items-center gap-1">Play {<Play />}</span>
             )}
           </Button>
-          <div className="flex items-center gap-4 justify-between">
+          <div className="flex items-center justify-between gap-4">
             <Button
               className="w-24"
               onClick={() => setIntensity([intensity[0] - step])}
@@ -148,7 +148,7 @@ const EmotionInput = ({
               Higher <ChevronRight />
             </Button>
           </div>
-          <div className="flex items-center gap-4 justify-between">
+          <div className="flex items-center justify-between gap-4">
             <Button
               className="w-24"
               onClick={() => setBeatSpeed([beatSpeed[0] - step])}

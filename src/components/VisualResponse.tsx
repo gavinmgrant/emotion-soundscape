@@ -18,206 +18,209 @@ interface WavePointsProps {
 }
 
 // Memoize the WavePoints component to prevent unnecessary re-renders
-const WavePoints = memo(({
-  intensity,
-  beatSpeed,
-  isAudioEnabled,
-  emotion,
-}: WavePointsProps) => {
-  const pointsRef = useRef<THREE.Points>(null)
-  const geometryRef = useRef<THREE.BufferGeometry>(null)
-  const synthRef = useRef<Tone.PolySynth | null>(null)
-  const sequenceRef = useRef<Tone.Sequence | null>(null)
-  const pulseRef = useRef(0)
-  const intensityRef = useRef(0)
-  const transport = Tone.getTransport()
+const WavePoints = memo(
+  ({ intensity, beatSpeed, isAudioEnabled, emotion }: WavePointsProps) => {
+    const pointsRef = useRef<THREE.Points>(null)
+    const geometryRef = useRef<THREE.BufferGeometry>(null)
+    const synthRef = useRef<Tone.PolySynth | null>(null)
+    const sequenceRef = useRef<Tone.Sequence | null>(null)
+    const pulseRef = useRef(0)
+    const intensityRef = useRef(0)
+    const transport = Tone.getTransport()
 
-  // Initialize Tone.js synth
-  useEffect(() => {
-    if (!isAudioEnabled) return
+    // Initialize Tone.js synth
+    useEffect(() => {
+      if (!isAudioEnabled) return
 
-    // Create and configure the synth
-    synthRef.current = new Tone.PolySynth(Tone.Synth, {
-      oscillator: { type: "sine" },
-      envelope: { decay: 0.5, sustain: 0.6 },
-    }).toDestination()
+      // Create and configure the synth
+      synthRef.current = new Tone.PolySynth(Tone.Synth, {
+        oscillator: { type: "sine" },
+        envelope: { decay: 0.5, sustain: 0.6 },
+      }).toDestination()
 
-    // Set the volume
-    synthRef.current.volume.value = -15
+      // Set the volume
+      synthRef.current.volume.value = -15
 
-    // Create a sequence for the melody
-    sequenceRef.current = new Tone.Sequence(
-      (time, note) => {
-        if (synthRef.current) {
-          synthRef.current.triggerAttackRelease(note, "2n", time)
-          // Trigger pulse on each note
-          pulseRef.current = 1
+      // Create a sequence for the melody
+      sequenceRef.current = new Tone.Sequence(
+        (time, note) => {
+          if (synthRef.current) {
+            synthRef.current.triggerAttackRelease(note, "2n", time)
+            // Trigger pulse on each note
+            pulseRef.current = 1
+          }
+        },
+        emotionSequences[emotion],
+        "4n",
+      )
+
+      // Start the sequence
+      sequenceRef.current.start(0)
+
+      return () => {
+        try {
+          // Stop the sequence at the next beat
+          if (sequenceRef.current) {
+            const currentTime = transport.seconds
+            const nextBeat = Math.ceil(currentTime * 4) / 4 // Round up to next quarter note
+            sequenceRef.current.stop(nextBeat)
+            sequenceRef.current.dispose()
+          }
+          if (synthRef.current) {
+            synthRef.current.dispose()
+          }
+        } catch (error) {
+          console.error("Error during audio cleanup:", error)
+          // Force cleanup if normal cleanup fails
+          if (sequenceRef.current) {
+            sequenceRef.current.dispose()
+          }
+          if (synthRef.current) {
+            synthRef.current.dispose()
+          }
         }
-      },
-      emotionSequences[emotion],
-      "4n"
+      }
+    }, [emotion, isAudioEnabled, transport.seconds])
+
+    // Update sequence speed based on beatSpeed
+    useEffect(() => {
+      intensityRef.current = intensity
+
+      if (sequenceRef.current && isAudioEnabled) {
+        if (beatSpeed > 0) {
+          // Adjust the sequence speed based on beatSpeed
+          sequenceRef.current.playbackRate = beatSpeed
+          sequenceRef.current.start()
+        } else {
+          sequenceRef.current.stop()
+        }
+      }
+    }, [intensity, beatSpeed, isAudioEnabled])
+
+    // Create points geometry
+    const geometry = useMemo(() => {
+      const size = 15
+      const segments = 128
+      const points = []
+      const colors = []
+
+      for (let i = 0; i <= segments; i++) {
+        for (let j = 0; j <= segments; j++) {
+          const x = (i / segments - 0.5) * size
+          const y = (j / segments - 0.5) * size
+          // Rotate points 90 degrees on X axis by swapping y and z
+          points.push(x, 0, y)
+          // Add initial color (white)
+          colors.push(1, 1, 1) // RGB for white
+        }
+      }
+
+      const geometry = new THREE.BufferGeometry()
+      geometry.setAttribute(
+        "position",
+        new THREE.Float32BufferAttribute(points, 3),
+      )
+      geometry.setAttribute(
+        "color",
+        new THREE.Float32BufferAttribute(colors, 3),
+      )
+      return geometry
+    }, [])
+
+    useFrame(() => {
+      if (pointsRef.current && geometryRef.current) {
+        const positions = geometryRef.current.attributes.position.array
+        const colors = geometryRef.current.attributes.color.array
+
+        // Decay the pulse more slowly for smoother ripples
+        pulseRef.current *= 0.97
+
+        // Calculate distance from center for each point
+        for (let i = 0; i < positions.length; i += 3) {
+          const x = positions[i]
+          const z = positions[i + 2]
+          const distanceFromCenter = Math.sqrt(x * x + z * z)
+
+          // Create smoother ripple patterns
+          const waveFrequency = 3
+          const waveAmplitude = pulseRef.current * intensityRef.current * 2 // Wave height based on intensity
+
+          // Create multiple overlapping ripples with different phases
+          const ripple1 =
+            Math.sin(
+              distanceFromCenter * waveFrequency - pulseRef.current * 2,
+            ) * waveAmplitude
+          const ripple2 =
+            Math.sin(
+              distanceFromCenter * waveFrequency * 0.8 - pulseRef.current * 1.6,
+            ) *
+            waveAmplitude *
+            0.7
+          const ripple3 =
+            Math.sin(
+              distanceFromCenter * waveFrequency * 0.6 - pulseRef.current * 1.2,
+            ) *
+            waveAmplitude *
+            0.5
+
+          // Add a circular wave that expands outward
+          const expandingWave =
+            Math.sin(distanceFromCenter - pulseRef.current * 3) *
+            waveAmplitude *
+            0.8
+
+          // Combine all waves with distance-based attenuation
+          const distanceAttenuation = Math.max(0, 1 - distanceFromCenter / 10) // Increased range
+          const height =
+            (ripple1 + ripple2 + ripple3 + expandingWave) * distanceAttenuation
+          positions[i + 1] = height
+
+          // Update colors based on height with white to dark blue gradient
+          const colorIndex = (i / 3) * 3
+          const blueIntensity = Math.min(1, Math.abs(height) * 0.7 + 0.3) // Base blue intensity
+          const whiteIntensity = Math.max(0, 1 - Math.abs(height) * 0.7) // White intensity that fades with height
+
+          // Set RGB values for white to dark blue gradient
+          colors[colorIndex] = whiteIntensity // R
+          colors[colorIndex + 1] = whiteIntensity // G
+          colors[colorIndex + 2] = whiteIntensity + blueIntensity // B
+        }
+
+        geometryRef.current.attributes.position.needsUpdate = true
+        geometryRef.current.attributes.color.needsUpdate = true
+      }
+    })
+
+    return (
+      <>
+        <points ref={pointsRef}>
+          <primitive object={geometry} ref={geometryRef} />
+          <pointsMaterial
+            size={0.05}
+            sizeAttenuation={true}
+            transparent
+            opacity={1}
+            vertexColors
+          />
+        </points>
+      </>
     )
+  },
+)
 
-    console.log("sequenceRef.current==>", sequenceRef.current)
-
-    // Start the sequence
-    sequenceRef.current.start(0)
-
-    return () => {
-      console.log("CLEANUP sequenceRef.current==>", sequenceRef.current)  
-      try {
-        // Stop the sequence at the next beat
-        if (sequenceRef.current) {
-          const currentTime = transport.seconds
-          const nextBeat = Math.ceil(currentTime * 4) / 4 // Round up to next quarter note
-          sequenceRef.current.stop(nextBeat)
-          sequenceRef.current.dispose()
-        }
-        if (synthRef.current) {
-          synthRef.current.dispose()
-        }
-      } catch (error) {
-        console.error("Error during audio cleanup:", error)
-        // Force cleanup if normal cleanup fails
-        if (sequenceRef.current) {
-          sequenceRef.current.dispose()
-        }
-        if (synthRef.current) {
-          synthRef.current.dispose()
-        }
-      }
-    }
-  }, [emotion, isAudioEnabled, transport.seconds])
-
-  // Update sequence speed based on beatSpeed
-  useEffect(() => {
-    intensityRef.current = intensity
-    console.log("beatSpeed==>", beatSpeed)
-
-    if (sequenceRef.current && isAudioEnabled) {
-      if (beatSpeed > 0) {
-        // Adjust the sequence speed based on beatSpeed
-        sequenceRef.current.playbackRate = beatSpeed
-        sequenceRef.current.start()
-      } else {
-        sequenceRef.current.stop()
-      }
-    }
-  }, [intensity, beatSpeed, isAudioEnabled])
-
-  // Create points geometry
-  const geometry = useMemo(() => {
-    const size = 15
-    const segments = 128
-    const points = []
-    const colors = []
-
-    for (let i = 0; i <= segments; i++) {
-      for (let j = 0; j <= segments; j++) {
-        const x = (i / segments - 0.5) * size
-        const y = (j / segments - 0.5) * size
-        // Rotate points 90 degrees on X axis by swapping y and z
-        points.push(x, 0, y)
-        // Add initial color (white)
-        colors.push(1, 1, 1) // RGB for white
-      }
-    }
-
-    const geometry = new THREE.BufferGeometry()
-    geometry.setAttribute(
-      "position",
-      new THREE.Float32BufferAttribute(points, 3)
-    )
-    geometry.setAttribute("color", new THREE.Float32BufferAttribute(colors, 3))
-    return geometry
-  }, [])
-
-  useFrame(() => {
-    if (pointsRef.current && geometryRef.current) {
-      const positions = geometryRef.current.attributes.position.array
-      const colors = geometryRef.current.attributes.color.array
-
-      // Decay the pulse more slowly for smoother ripples
-      pulseRef.current *= 0.97
-
-      // Calculate distance from center for each point
-      for (let i = 0; i < positions.length; i += 3) {
-        const x = positions[i]
-        const z = positions[i + 2]
-        const distanceFromCenter = Math.sqrt(x * x + z * z)
-
-        // Create smoother ripple patterns
-        const waveFrequency = 3
-        const waveAmplitude = pulseRef.current * intensityRef.current * 2 // Wave height based on intensity
-
-        // Create multiple overlapping ripples with different phases
-        const ripple1 =
-          Math.sin(distanceFromCenter * waveFrequency - pulseRef.current * 2) *
-          waveAmplitude
-        const ripple2 =
-          Math.sin(
-            distanceFromCenter * waveFrequency * 0.8 - pulseRef.current * 1.6
-          ) *
-          waveAmplitude *
-          0.7
-        const ripple3 =
-          Math.sin(
-            distanceFromCenter * waveFrequency * 0.6 - pulseRef.current * 1.2
-          ) *
-          waveAmplitude *
-          0.5
-
-        // Add a circular wave that expands outward
-        const expandingWave =
-          Math.sin(distanceFromCenter - pulseRef.current * 3) *
-          waveAmplitude *
-          0.8
-
-        // Combine all waves with distance-based attenuation
-        const distanceAttenuation = Math.max(0, 1 - distanceFromCenter / 10) // Increased range
-        const height =
-          (ripple1 + ripple2 + ripple3 + expandingWave) * distanceAttenuation
-        positions[i + 1] = height
-
-        // Update colors based on height with white to dark blue gradient
-        const colorIndex = (i / 3) * 3
-        const blueIntensity = Math.min(1, Math.abs(height) * 0.7 + 0.3) // Base blue intensity
-        const whiteIntensity = Math.max(0, 1 - Math.abs(height) * 0.7) // White intensity that fades with height
-
-        // Set RGB values for white to dark blue gradient
-        colors[colorIndex] = whiteIntensity // R
-        colors[colorIndex + 1] = whiteIntensity // G
-        colors[colorIndex + 2] = whiteIntensity + blueIntensity // B
-      }
-
-      geometryRef.current.attributes.position.needsUpdate = true
-      geometryRef.current.attributes.color.needsUpdate = true
-    }
-  })
-
-  return (
-    <>
-      <points ref={pointsRef}>
-        <primitive object={geometry} ref={geometryRef} />
-        <pointsMaterial
-          size={0.05}
-          sizeAttenuation={true}
-          transparent
-          opacity={1}
-          vertexColors
-        />
-      </points>
-    </>
-  )
-})
-
-WavePoints.displayName = 'WavePoints'
+WavePoints.displayName = "WavePoints"
 
 // Create a new component for the controls visibility toggle
-const ControlsToggle = ({ showControls, onToggle }: { showControls: boolean; onToggle: () => void }) => {
+const ControlsToggle = ({
+  showControls,
+  onToggle,
+}: {
+  showControls: boolean
+  onToggle: () => void
+}) => {
   return (
-    <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
-      <h1 className="text-lg font-semibold rounded-lg bg-black px-2 py-1">
+    <div className="absolute top-3 right-3 left-3 z-10 flex items-center justify-between">
+      <h1 className="rounded-lg bg-black px-2 py-1 text-lg font-semibold">
         Emotion Soundscape
       </h1>
       <Button className="w-36" onClick={onToggle}>
@@ -235,7 +238,7 @@ const ControlsToggle = ({ showControls, onToggle }: { showControls: boolean; onT
   )
 }
 
-const VisualResponsePlane = () => {
+const VisualResponse = () => {
   const defaultBeatSpeed = 0.5
   const defaultIntensity = 0.5
 
@@ -277,8 +280,11 @@ const VisualResponsePlane = () => {
   }, [isAudioEnabled, transport])
 
   return (
-    <div className="relative flex flex-col items-center justify-center text-white h-full w-screen">
-      <ControlsToggle showControls={showControls} onToggle={() => setShowControls(!showControls)} />
+    <div className="relative flex h-full w-screen flex-col items-center justify-center text-white">
+      <ControlsToggle
+        showControls={showControls}
+        onToggle={() => setShowControls(!showControls)}
+      />
       <Canvas className="w-full" camera={{ position: [0, 0, 20], fov: 30 }}>
         <OrbitControls
           minAzimuthAngle={0}
@@ -312,4 +318,4 @@ const VisualResponsePlane = () => {
   )
 }
 
-export default VisualResponsePlane
+export default VisualResponse
