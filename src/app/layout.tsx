@@ -18,7 +18,7 @@ export const metadata: Metadata = {
   openGraph: {
     title: "Emotion Soundscape",
     description: "Visual and audio responses to an emotional state",
-    images: [{ url: "/og.png" }],
+    images: [{ url: "/og.webp" }],
   },
 }
 
