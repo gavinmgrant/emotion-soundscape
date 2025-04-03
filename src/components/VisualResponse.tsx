@@ -247,7 +247,7 @@ const VisualResponsePlane = () => {
   }
 
   return (
-    <div className="relative flex flex-col items-center justify-center text-white h-dvh w-screen">
+    <div className="relative flex flex-col items-center justify-center text-white h-full w-screen">
       <h1 className="absolute top-0 text-lg sm:text-xl font-semibold px-3 py-2 m-3 text-center rounded-lg z-10 bg-black backdrop-blur-md">
         Emotion Soundscape
       </h1>
