@@ -2,11 +2,14 @@
 
 import * as THREE from "three"
 import * as Tone from "tone"
-import { useRef, useMemo, useEffect, useState } from "react"
+import { useRef, useMemo, useEffect, useState, useCallback, memo } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
 import { OrbitControls } from "@react-three/drei"
 import EmotionInput from "./EmotionInput"
+import { Button } from "@/components/ui/button"
+import { ChevronUp, ChevronDown } from "lucide-react"
 import { emotionSequences, emotionTimings } from "@/configs/emotions"
+
 interface WavePointsProps {
   intensity: number
   beatSpeed: number
@@ -14,7 +17,8 @@ interface WavePointsProps {
   emotion: string
 }
 
-const WavePoints = ({
+// Memoize the WavePoints component to prevent unnecessary re-renders
+const WavePoints = memo(({
   intensity,
   beatSpeed,
   isAudioEnabled,
@@ -41,9 +45,6 @@ const WavePoints = ({
     // Set the volume
     synthRef.current.volume.value = -15
 
-    // Define the melody notes
-    // const notes = ["Db4", ["Eb4", "Ab4", "Bb4", "F4"], "Gb4", "Db5", "Eb5"]
-
     // Create a sequence for the melody
     sequenceRef.current = new Tone.Sequence(
       (time, note) => {
@@ -57,10 +58,13 @@ const WavePoints = ({
       "4n"
     )
 
+    console.log("sequenceRef.current==>", sequenceRef.current)
+
     // Start the sequence
     sequenceRef.current.start(0)
 
     return () => {
+      console.log("CLEANUP sequenceRef.current==>", sequenceRef.current)  
       try {
         // Stop the sequence at the next beat
         if (sequenceRef.current) {
@@ -83,11 +87,12 @@ const WavePoints = ({
         }
       }
     }
-  }, [isAudioEnabled, transport.seconds])
+  }, [emotion, isAudioEnabled, transport.seconds])
 
   // Update sequence speed based on beatSpeed
   useEffect(() => {
     intensityRef.current = intensity
+    console.log("beatSpeed==>", beatSpeed)
 
     if (sequenceRef.current && isAudioEnabled) {
       if (beatSpeed > 0) {
@@ -204,6 +209,30 @@ const WavePoints = ({
       </points>
     </>
   )
+})
+
+WavePoints.displayName = 'WavePoints'
+
+// Create a new component for the controls visibility toggle
+const ControlsToggle = ({ showControls, onToggle }: { showControls: boolean; onToggle: () => void }) => {
+  return (
+    <div className="absolute top-3 left-3 right-3 flex items-center justify-between z-10">
+      <h1 className="text-lg font-semibold rounded-lg bg-black px-2 py-1">
+        Emotion Soundscape
+      </h1>
+      <Button className="w-36" onClick={onToggle}>
+        {showControls ? (
+          <span className="flex items-center gap-2">
+            Hide controls <ChevronUp />
+          </span>
+        ) : (
+          <span className="flex items-center gap-2">
+            Show controls <ChevronDown />
+          </span>
+        )}
+      </Button>
+    </div>
+  )
 }
 
 const VisualResponsePlane = () => {
@@ -214,6 +243,7 @@ const VisualResponsePlane = () => {
   const [intensity, setIntensity] = useState([defaultIntensity])
   const [beatSpeed, setBeatSpeed] = useState([defaultBeatSpeed])
   const [isAudioEnabled, setIsAudioEnabled] = useState(false)
+  const [showControls, setShowControls] = useState(true)
 
   const transport = Tone.getTransport()
 
@@ -224,7 +254,7 @@ const VisualResponsePlane = () => {
     }
   }, [emotion])
 
-  const handleToggleAudio = async () => {
+  const handleToggleAudio = useCallback(async () => {
     try {
       if (isAudioEnabled) {
         await transport.stop()
@@ -244,13 +274,11 @@ const VisualResponsePlane = () => {
     } catch (error) {
       console.error("Error starting audio:", error)
     }
-  }
+  }, [isAudioEnabled, transport])
 
   return (
     <div className="relative flex flex-col items-center justify-center text-white h-full w-screen">
-      <h1 className="absolute top-0 text-lg sm:text-xl font-semibold px-3 py-2 m-3 text-center rounded-lg z-10 bg-black backdrop-blur-md">
-        Emotion Soundscape
-      </h1>
+      <ControlsToggle showControls={showControls} onToggle={() => setShowControls(!showControls)} />
       <Canvas className="w-full" camera={{ position: [0, 0, 20], fov: 30 }}>
         <OrbitControls
           minAzimuthAngle={0}
@@ -278,6 +306,7 @@ const VisualResponsePlane = () => {
         setIntensity={setIntensity}
         setBeatSpeed={setBeatSpeed}
         setEmotion={setEmotion}
+        showControls={showControls}
       />
     </div>
   )

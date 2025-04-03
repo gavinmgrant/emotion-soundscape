@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { AnimatePresence, motion } from "motion/react"
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
 import {
@@ -36,6 +37,7 @@ interface EmotionInputProps {
   setIntensity: (e: number[]) => void
   setBeatSpeed: (e: number[]) => void
   setEmotion: (e: string) => void
+  showControls: boolean
 }
 
 const EmotionInput = ({
@@ -47,116 +49,130 @@ const EmotionInput = ({
   setIntensity,
   setBeatSpeed,
   setEmotion,
+  showControls,
 }: EmotionInputProps) => {
   const step = 0.025
   const [open, setOpen] = useState(false)
 
   return (
-    <div className="absolute bottom-0 flex flex-col gap-3 w-full sm:w-1/2 max-w-md bg-black backdrop-blur-md rounded-lg p-3 m-3">
-      <Popover open={open} onOpenChange={setOpen}>
-        <PopoverTrigger asChild>
+    <AnimatePresence>
+      {showControls && (
+        <motion.div
+          className="absolute bottom-0 flex flex-col gap-3 w-full sm:w-1/2 max-w-md p-3"
+          initial={{ opacity: 0, y: 240 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 240 }}
+          transition={{ duration: 0.25 }}
+        >
+          <Popover open={open} onOpenChange={setOpen}>
+            <PopoverTrigger asChild>
+              <Button
+                variant="secondary"
+                role="combobox"
+                aria-expanded={open}
+                className="w-full justify-between"
+              >
+                {emotion
+                  ? emotions.find(
+                      (emo: { value: string; label: string }) =>
+                        emo.value === emotion
+                    )?.label
+                  : "Select an emotion..."}
+                <ChevronsUpDown className="opacity-50" />
+              </Button>
+            </PopoverTrigger>
+            <PopoverContent className="w-full my-2 p-0">
+              <Command>
+                <CommandInput
+                  placeholder="Search emotions..."
+                  className="h-9"
+                />
+                <CommandList>
+                  <CommandEmpty>No framework found.</CommandEmpty>
+                  <CommandGroup>
+                    {emotions.map((emo: { value: string; label: string }) => (
+                      <CommandItem
+                        key={emo.value}
+                        value={emo.value}
+                        onSelect={(currentEmotion: string) => {
+                          setEmotion(
+                            currentEmotion === emotion ? "" : currentEmotion
+                          )
+                          setOpen(false)
+                        }}
+                      >
+                        {emo.label}
+                        <Check
+                          className={cn(
+                            "ml-auto",
+                            emotion === emo.value ? "opacity-100" : "opacity-0"
+                          )}
+                        />
+                      </CommandItem>
+                    ))}
+                  </CommandGroup>
+                </CommandList>
+              </Command>
+            </PopoverContent>
+          </Popover>
           <Button
-            variant="secondary"
-            role="combobox"
-            aria-expanded={open}
-            className="w-full justify-between"
+            className="w-full"
+            onClick={handleToggleAudio}
+            disabled={!emotion}
           >
-            {emotion
-              ? emotions.find(
-                  (emo: { value: string; label: string }) =>
-                    emo.value === emotion
-                )?.label
-              : "Select an emotion..."}
-            <ChevronsUpDown className="opacity-50" />
+            {isAudioEnabled ? (
+              <span className="flex items-center gap-1">Pause {<Pause />}</span>
+            ) : (
+              <span className="flex items-center gap-1">Play {<Play />}</span>
+            )}
           </Button>
-        </PopoverTrigger>
-        <PopoverContent className="w-full my-2 p-0">
-          <Command>
-            <CommandInput placeholder="Search emotions..." className="h-9" />
-            <CommandList>
-              <CommandEmpty>No framework found.</CommandEmpty>
-              <CommandGroup>
-                {emotions.map((emo: { value: string; label: string }) => (
-                  <CommandItem
-                    key={emo.value}
-                    value={emo.value}
-                    onSelect={(currentEmotion: string) => {
-                      setEmotion(
-                        currentEmotion === emotion ? "" : currentEmotion
-                      )
-                      setOpen(false)
-                    }}
-                  >
-                    {emo.label}
-                    <Check
-                      className={cn(
-                        "ml-auto",
-                        emotion === emo.value ? "opacity-100" : "opacity-0"
-                      )}
-                    />
-                  </CommandItem>
-                ))}
-              </CommandGroup>
-            </CommandList>
-          </Command>
-        </PopoverContent>
-      </Popover>
-      <Button
-        className="w-full"
-        onClick={handleToggleAudio}
-        disabled={!emotion}
-      >
-        {isAudioEnabled ? (
-          <span className="flex items-center gap-1">Pause {<Pause />}</span>
-        ) : (
-          <span className="flex items-center gap-1">Play {<Play />}</span>
-        )}
-      </Button>
-      <div className="flex items-center gap-4 justify-between">
-        <Button
-          className="w-24"
-          onClick={() => setIntensity([intensity[0] - step])}
-        >
-          <ChevronLeft /> Lower
-        </Button>
-        <Slider
-          min={0.2}
-          max={0.8}
-          step={step}
-          defaultValue={intensity}
-          value={intensity}
-          onValueChange={(e) => setIntensity([e[0]])}
-        />
-        <Button
-          className="w-24 text-right"
-          onClick={() => setIntensity([intensity[0] + step])}
-        >
-          Higher <ChevronRight />
-        </Button>
-      </div>
-      <div className="flex items-center gap-4 justify-between">
-        <Button
-          className="w-24"
-          onClick={() => setBeatSpeed([beatSpeed[0] - step])}
-        >
-          <ChevronLeft /> Slower
-        </Button>
-        <Slider
-          min={0.2}
-          max={0.8}
-          step={step}
-          defaultValue={beatSpeed}
-          value={beatSpeed}
-          onValueChange={(e) => setBeatSpeed([e[0]])}
-        />
-        <Button
-          className="w-24 text-right"
-          onClick={() => setBeatSpeed([beatSpeed[0] + step])}
-        >
-          Faster <ChevronRight />
-        </Button>
-      </div>
-    </div>
+          <div className="flex items-center gap-4 justify-between">
+            <Button
+              className="w-24"
+              onClick={() => setIntensity([intensity[0] - step])}
+            >
+              <ChevronLeft /> Lower
+            </Button>
+            <Slider
+              min={0.2}
+              max={0.8}
+              step={step}
+              defaultValue={intensity}
+              value={intensity}
+              onValueChange={(e) => setIntensity([e[0]])}
+            />
+            <Button
+              className="w-24 text-right"
+              onClick={() => setIntensity([intensity[0] + step])}
+            >
+              Higher <ChevronRight />
+            </Button>
+          </div>
+          <div className="flex items-center gap-4 justify-between">
+            <Button
+              className="w-24"
+              onClick={() => setBeatSpeed([beatSpeed[0] - step])}
+            >
+              <ChevronLeft /> Slower
+            </Button>
+            <Slider
+              min={0.2}
+              max={0.8}
+              step={step}
+              defaultValue={beatSpeed}
+              value={beatSpeed}
+              onValueChange={(e) => setBeatSpeed([e[0]])}
+            />
+            <Button
+              className="w-24 text-right"
+              onClick={() => setBeatSpeed([beatSpeed[0] + step])}
+            >
+              Faster <ChevronRight />
+            </Button>
+          </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   )
 }
 
