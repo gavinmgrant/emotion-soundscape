@@ -6,17 +6,19 @@ import { useRef, useMemo, useEffect, useState } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
 import { OrbitControls } from "@react-three/drei"
 import EmotionInput from "./EmotionInput"
-
+import { emotionSequences, emotionTimings } from "@/configs/emotions"
 interface WavePointsProps {
   intensity: number
   beatSpeed: number
   isAudioEnabled: boolean
+  emotion: string
 }
 
 const WavePoints = ({
   intensity,
   beatSpeed,
   isAudioEnabled,
+  emotion,
 }: WavePointsProps) => {
   const pointsRef = useRef<THREE.Points>(null)
   const geometryRef = useRef<THREE.BufferGeometry>(null)
@@ -40,7 +42,7 @@ const WavePoints = ({
     synthRef.current.volume.value = -15
 
     // Define the melody notes
-    const notes = ["Db4", "Eb4", "Ab4", "Bb4", "F4", "Gb4", "Db5", "Eb5"]
+    // const notes = ["Db4", ["Eb4", "Ab4", "Bb4", "F4"], "Gb4", "Db5", "Eb5"]
 
     // Create a sequence for the melody
     sequenceRef.current = new Tone.Sequence(
@@ -51,7 +53,7 @@ const WavePoints = ({
           pulseRef.current = 1
         }
       },
-      notes,
+      emotionSequences[emotion],
       "4n"
     )
 
@@ -207,11 +209,20 @@ const WavePoints = ({
 const VisualResponsePlane = () => {
   const defaultBeatSpeed = 0.5
   const defaultIntensity = 0.5
+
+  const [emotion, setEmotion] = useState("")
   const [intensity, setIntensity] = useState([defaultIntensity])
   const [beatSpeed, setBeatSpeed] = useState([defaultBeatSpeed])
   const [isAudioEnabled, setIsAudioEnabled] = useState(false)
 
   const transport = Tone.getTransport()
+
+  useEffect(() => {
+    if (emotion) {
+      setIntensity([emotionTimings[emotion].intensity])
+      setBeatSpeed([emotionTimings[emotion].beatSpeed])
+    }
+  }, [emotion])
 
   const handleToggleAudio = async () => {
     try {
@@ -249,6 +260,7 @@ const VisualResponsePlane = () => {
           intensity={intensity[0]}
           beatSpeed={beatSpeed[0]}
           isAudioEnabled={isAudioEnabled}
+          emotion={emotion}
         />
       </Canvas>
       <EmotionInput
@@ -256,8 +268,10 @@ const VisualResponsePlane = () => {
         isAudioEnabled={isAudioEnabled}
         intensity={intensity}
         beatSpeed={beatSpeed}
+        emotion={emotion}
         setIntensity={setIntensity}
         setBeatSpeed={setBeatSpeed}
+        setEmotion={setEmotion}
       />
     </div>
   )
