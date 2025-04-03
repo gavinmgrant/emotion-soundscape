@@ -15,6 +15,11 @@ const geistMono = Geist_Mono({
 export const metadata: Metadata = {
   title: "Emotion Soundscape",
   description: "Visual and audio responses to an emotional state",
+  openGraph: {
+    title: "Emotion Soundscape",
+    description: "Visual and audio responses to an emotional state",
+    images: [{ url: "/og.png" }],
+  },
 }
 
 export default function RootLayout({
