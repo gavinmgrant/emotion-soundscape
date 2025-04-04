@@ -6,6 +6,7 @@ import { useRef, useMemo, useEffect, useState, useCallback, memo } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
 import { OrbitControls } from "@react-three/drei"
 import EmotionInput from "./EmotionInput"
+import GitHubButton from "./GitHubButton"
 import { Button } from "@/components/ui/button"
 import { ChevronUp, ChevronDown } from "lucide-react"
 import { emotionSequences, emotionTimings } from "@/configs/emotions"
@@ -223,17 +224,22 @@ const ControlsToggle = ({
       <h1 className="rounded-lg bg-black px-2 py-1 text-lg font-semibold">
         Emotion Soundscape
       </h1>
-      <Button className="w-36" onClick={onToggle}>
-        {showControls ? (
-          <span className="flex items-center gap-2">
-            Hide controls <ChevronUp />
-          </span>
-        ) : (
-          <span className="flex items-center gap-2">
-            Show controls <ChevronDown />
-          </span>
-        )}
-      </Button>
+      <div className="flex items-center gap-2">
+        <Button className="w-auto sm:w-36" onClick={onToggle}>
+          {showControls ? (
+            <span className="flex items-center gap-2">
+              Hide <span className="hidden sm:inline">controls</span>{" "}
+              <ChevronUp />
+            </span>
+          ) : (
+            <span className="flex items-center gap-2">
+              Show <span className="hidden sm:inline">controls</span>{" "}
+              <ChevronDown />
+            </span>
+          )}
+        </Button>
+        <GitHubButton />
+      </div>
     </div>
   )
 }

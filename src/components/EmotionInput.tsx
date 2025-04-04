@@ -88,7 +88,7 @@ const EmotionInput = ({
                   className="h-9"
                 />
                 <CommandList>
-                  <CommandEmpty>No framework found.</CommandEmpty>
+                  <CommandEmpty>No emotions found.</CommandEmpty>
                   <CommandGroup>
                     {emotions.map((emo: { value: string; label: string }) => (
                       <CommandItem
