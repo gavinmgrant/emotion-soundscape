@@ -28,6 +28,19 @@ import {
   PopoverTrigger,
 } from "@/components/ui/popover"
 
+/**
+ * Props interface for the EmotionInput component
+ * 
+ * @param handleToggleAudio - Function to toggle audio playback
+ * @param isAudioEnabled - Whether audio is currently playing
+ * @param intensity - Array containing the current intensity value
+ * @param beatSpeed - Array containing the current beat speed value
+ * @param emotion - The currently selected emotion
+ * @param setIntensity - Function to update the intensity value
+ * @param setBeatSpeed - Function to update the beat speed value
+ * @param setEmotion - Function to update the selected emotion
+ * @param showControls - Whether the controls should be visible
+ */
 interface EmotionInputProps {
   handleToggleAudio: () => void
   isAudioEnabled: boolean
@@ -40,6 +53,15 @@ interface EmotionInputProps {
   showControls: boolean
 }
 
+/**
+ * EmotionInput Component
+ * 
+ * A component that provides controls for selecting emotions and adjusting
+ * intensity and beat speed. It includes a dropdown for emotion selection,
+ * a button to toggle audio playback, and sliders for adjusting intensity and beat speed.
+ * 
+ * The component is animated and can be shown or hidden based on the showControls prop.
+ */
 const EmotionInput = ({
   handleToggleAudio,
   isAudioEnabled,
@@ -51,7 +73,9 @@ const EmotionInput = ({
   setEmotion,
   showControls,
 }: EmotionInputProps) => {
+  // Step size for intensity and beat speed adjustments
   const step = 0.025
+  // State for the emotion dropdown popover
   const [open, setOpen] = useState(false)
 
   return (
@@ -64,6 +88,7 @@ const EmotionInput = ({
           exit={{ opacity: 0, y: 240 }}
           transition={{ duration: 0.25 }}
         >
+          {/* Emotion selection dropdown */}
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
               <Button
@@ -115,6 +140,8 @@ const EmotionInput = ({
               </Command>
             </PopoverContent>
           </Popover>
+          
+          {/* Audio playback toggle button */}
           <Button
             className="w-full"
             onClick={handleToggleAudio}
@@ -126,6 +153,8 @@ const EmotionInput = ({
               <span className="flex items-center gap-1">Play {<Play />}</span>
             )}
           </Button>
+          
+          {/* Intensity control slider */}
           <div className="flex items-center justify-between gap-4">
             <Button
               className="w-24"
@@ -148,6 +177,8 @@ const EmotionInput = ({
               Higher <ChevronRight />
             </Button>
           </div>
+          
+          {/* Beat speed control slider */}
           <div className="flex items-center justify-between gap-4">
             <Button
               className="w-24"
