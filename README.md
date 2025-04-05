@@ -2,6 +2,8 @@
 
 A meditative, interactive web experience that combines sound and visuals to create an immersive emotional journey.
 
+![Emotion Soundscape UI](./public/screenshot.webp)
+
 ## Overview
 
 Emotion Soundscape is a single-page web application built with Next.js, Tone.js, and React Three Fiber. It invites users to select an emotion and be immersed in a pulsing world of synchronized sound and visuals. The experience creates a meditative space where users can explore different emotional states through interactive audio-visual feedback.
@@ -32,12 +34,14 @@ Emotion Soundscape is a single-page web application built with Next.js, Tone.js,
 ### Installation
 
 1. Clone the repository:
+
    ```bash
    git clone https://github.com/gavinmgrant/emotion-soundscape.git
    cd emotion-soundscape
    ```
 
 2. Install dependencies:
+
    ```bash
    npm install
    # or
@@ -45,6 +49,7 @@ Emotion Soundscape is a single-page web application built with Next.js, Tone.js,
    ```
 
 3. Run the development server:
+
    ```bash
    npm run dev
    # or
