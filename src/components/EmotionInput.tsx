@@ -27,31 +27,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover"
-
-/**
- * Props interface for the EmotionInput component
- * 
- * @param handleToggleAudio - Function to toggle audio playback
- * @param isAudioEnabled - Whether audio is currently playing
- * @param intensity - Array containing the current intensity value
- * @param beatSpeed - Array containing the current beat speed value
- * @param emotion - The currently selected emotion
- * @param setIntensity - Function to update the intensity value
- * @param setBeatSpeed - Function to update the beat speed value
- * @param setEmotion - Function to update the selected emotion
- * @param showControls - Whether the controls should be visible
- */
-interface EmotionInputProps {
-  handleToggleAudio: () => void
-  isAudioEnabled: boolean
-  intensity: number[]
-  beatSpeed: number[]
-  emotion: string
-  setIntensity: (e: number[]) => void
-  setBeatSpeed: (e: number[]) => void
-  setEmotion: (e: string) => void
-  showControls: boolean
-}
+import type { EmotionInputProps } from "@/types"
 
 /**
  * EmotionInput Component

@@ -1,18 +1,4 @@
-interface EmotionSequence {
-  [key: string]: (string | string[])[]
-}
-
-interface EmotionTiming {
-  [key: string]: {
-    intensity: number
-    beatSpeed: number
-  }
-}
-
-interface Emotion {
-  value: string
-  label: string
-}
+import type { EmotionSequence, EmotionTiming, Emotion } from "@/types"
 
 export const emotionSequences: EmotionSequence = {
   happiness: ["C4", ["E4", "G4", "C5"], "A4", "D5", "E5"], // Major, uplifting

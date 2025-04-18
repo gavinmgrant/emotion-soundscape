@@ -10,21 +10,7 @@ import GitHubButton from "./GitHubButton"
 import { Button } from "@/components/ui/button"
 import { ChevronUp, ChevronDown } from "lucide-react"
 import { emotionSequences, emotionTimings } from "@/configs/emotions"
-
-/** Props interface for the WavePoints component
- *
- * @param intensity - Controls the amplitude of the wave animation
- * @param beatSpeed - Controls the speed of the audio sequence
- * @param isAudioEnabled - Whether audio is currently playing
- * @param emotion - The currently selected emotion
- */
-
-interface WavePointsProps {
-  intensity: number
-  beatSpeed: number
-  isAudioEnabled: boolean
-  emotion: string
-}
+import type { WavePointsProps, ControlsToggleProps } from "@/types"
 
 /**
  * WavePoints Component
@@ -259,17 +245,6 @@ const WavePoints = memo(
 
 // Set display name for debugging
 WavePoints.displayName = "WavePoints"
-
-/** Props interface for the ControlsToggle component
- *
- * @param showControls - Whether the controls are currently visible
- * @param onToggle - Function to call when the toggle button is clicked
- */
-
-interface ControlsToggleProps {
-  showControls: boolean
-  onToggle: () => void
-}
 
 /**
  * ControlsToggle Component
