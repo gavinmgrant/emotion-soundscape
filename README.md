@@ -71,6 +71,7 @@ Emotion Soundscape is a single-page web application built with Next.js, Tone.js,
 - `/src/contexts`: React contexts for state management (PulseContext)
 - `/src/configs`: Configuration files for emotion sequences and timings
 - `/src/lib`: Utility functions and audio helpers
+- `/src/types`: Type definitions for components and data structures
 
 ## License
 
