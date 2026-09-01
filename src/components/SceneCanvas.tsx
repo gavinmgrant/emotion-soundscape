@@ -195,7 +195,7 @@ export default function SceneCanvas({
         maxAzimuthAngle={0}
         minPolarAngle={0}
         maxPolarAngle={Math.PI}
-        maxDistance={30}
+        maxDistance={24}
         minDistance={6}
       />
       <ambientLight intensity={0.35} />
