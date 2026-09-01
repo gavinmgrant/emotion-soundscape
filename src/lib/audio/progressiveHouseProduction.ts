@@ -80,6 +80,18 @@ const PROGRESSIVE_DRUMS: Record<EmotionId, EmotionDrums> = {
     drum((s) => s === 4 || s === 12),
     drum(() => false),
   ),
+  anxious: kit(
+    kickFourOnFloor,
+    drum((s) => s === 4 || s === 12),
+    drum((s) => s % 2 === 1),
+    drum((s) => s === 3 || s === 7 || s === 11 || s === 15),
+  ),
+  stress: kit(
+    kickFourOnFloor,
+    snareTwoFour,
+    drum((s) => s === 2 || s === 6 || s === 10 || s === 14),
+    drum((s) => s === 7 || s === 15),
+  ),
 }
 
 interface EmotionVibe {
@@ -174,6 +186,18 @@ const EMOTION_VIBE: Record<EmotionId, EmotionVibe> = {
     stabStyle: "sparse",
     bassSubdivision: "1m",
     stabDuration: "1n",
+  },
+  anxious: {
+    hookPattern: "chopped",
+    stabStyle: "syncopated",
+    bassSubdivision: "2n",
+    stabDuration: "16n",
+  },
+  stress: {
+    hookPattern: "syncopated",
+    stabStyle: "offbeat",
+    bassSubdivision: "4n",
+    stabDuration: "8n",
   },
 }
 

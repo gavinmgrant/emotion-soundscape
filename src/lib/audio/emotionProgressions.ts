@@ -17,6 +17,8 @@ export type EmotionId =
   | "embarrassment"
   | "relief"
   | "gratitude"
+  | "anxious"
+  | "stress"
 
 interface ChordProgression4 {
   chords: [ChordTriad, ChordTriad, ChordTriad, ChordTriad]
@@ -292,6 +294,42 @@ const GRATITUDE_SONG = song32(
   ],
 )
 
+const ANXIOUS_SONG = song32(
+  {
+    chords: [
+      ["E2", "G2", "B2"],
+      ["G2", "B2", "D3"],
+      ["A2", "C3", "E3"],
+      ["B2", "D#3", "F#3"],
+    ],
+    bass: ["E1", "G1", "A1", "B1"],
+  },
+  [
+    ["B4", "A4", "G4", "F#4", "E4", "D4", "C#4", "B3"],
+    ["E4", "F#4", "G4", "A4", "B4", "A4", "G4", "F#4"],
+    ["G4", "A4", "B4", "C#5", "B4", "A4", "G4", "E4"],
+    ["F#4", "E4", "D4", "C#4", "B3", "A3", "G#3", "B3"],
+  ],
+)
+
+const STRESS_SONG = song32(
+  {
+    chords: [
+      ["D2", "F2", "A2"],
+      ["Bb2", "D3", "F3"],
+      ["C3", "E3", "G3"],
+      ["F2", "A2", "C3"],
+    ],
+    bass: ["D1", "Bb1", "C2", "F1"],
+  },
+  [
+    ["A4", "G4", "F4", "E4", "D4", "C4", "D4", "F4"],
+    ["D4", "E4", "F4", "G4", "A4", "Bb4", "A4", "G4"],
+    ["F4", "G4", "A4", "Bb4", "C5", "Bb4", "A4", "F4"],
+    ["D4", "C4", "Bb3", "A3", "G3", "F3", "G3", "A3"],
+  ],
+)
+
 const EMOTION_SONGS: Record<EmotionId, EmotionSong> = {
   happiness: HAPPINESS_SONG,
   anger: ANGER_SONG,
@@ -307,6 +345,8 @@ const EMOTION_SONGS: Record<EmotionId, EmotionSong> = {
   embarrassment: EMBARRASSMENT_SONG,
   relief: RELIEF_SONG,
   gratitude: GRATITUDE_SONG,
+  anxious: ANXIOUS_SONG,
+  stress: STRESS_SONG,
 }
 
 export function getEmotionSong(emotion: EmotionId): EmotionSong {
@@ -329,4 +369,6 @@ export const emotionChordNames: Record<EmotionId, string[]> = {
   embarrassment: ["C", "Am", "Dm", "G"],
   relief: ["F", "C", "Dm", "Bb"],
   gratitude: ["C", "F", "Am", "G"],
+  anxious: ["Em", "G", "Am", "B"],
+  stress: ["Dm", "Bb", "C", "F"],
 }

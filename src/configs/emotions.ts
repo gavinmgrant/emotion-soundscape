@@ -90,6 +90,16 @@ const EMOTION_META: Record<
     regulationLabel: "Helping you feel peace",
     timing: { intensity: 0.45, beatSpeed: 0.52 },
   },
+  anxious: {
+    regulationTarget: "calm",
+    regulationLabel: "Helping you feel calm",
+    timing: { intensity: 0.45, beatSpeed: 0.6 },
+  },
+  stress: {
+    regulationTarget: "grounded",
+    regulationLabel: "Helping you feel grounded",
+    timing: { intensity: 0.55, beatSpeed: 0.62 },
+  },
 }
 
 function buildEmotionConfig(emotion: EmotionId): EmotionAudioConfig {
@@ -152,6 +162,8 @@ export const emotions: Emotion[] = [
   { value: "happiness", label: "Happiness" },
   { value: "sadness", label: "Sadness" },
   { value: "fear", label: "Fear" },
+  { value: "anxious", label: "Anxious" },
+  { value: "stress", label: "Stress" },
   { value: "anger", label: "Anger" },
   { value: "surprise", label: "Surprise" },
   { value: "disgust", label: "Disgust" },

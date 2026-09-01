@@ -22,6 +22,8 @@ export const EMOTION_VISUAL_TINTS: Record<string, EmotionVisualTint> = {
   embarrassment: { r: 1, g: 0.62, b: 0.72 },
   relief: { r: 0.5, g: 0.95, b: 0.88 },
   gratitude: { r: 0.88, g: 0.78, b: 1 },
+  anxious: { r: 0.58, g: 0.62, b: 0.95 },
+  stress: { r: 0.95, g: 0.58, b: 0.38 },
 }
 
 export function getEmotionVisualTint(emotion: string): EmotionVisualTint {

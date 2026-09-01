@@ -127,7 +127,21 @@ const drumsGratitude = kit(
   drum((s) => s === 8),
 )
 
-// ─── 14 emotions with unique melodies and chord progressions ────────────────
+const drumsAnxious = kit(
+  drum((s) => s === 0 || s === 6 || s === 8 || s === 14),
+  drum((s) => s === 4 || s === 12),
+  drum((s) => s % 2 === 1),
+  drum((s) => s === 3 || s === 7 || s === 11 || s === 15),
+)
+
+const drumsStress = kit(
+  drum((s) => s % 4 === 0),
+  drum((s) => s === 4 || s === 10 || s === 12),
+  drum((s) => s === 2 || s === 6 || s === 10 || s === 14),
+  drum((s) => s === 7 || s === 15),
+)
+
+// ─── 16 emotions with unique melodies and chord progressions ────────────────
 
 export const emotionSoundProfiles: Record<EmotionId, TargetSoundProfile> = {
   anger: profile("anger", {
@@ -352,6 +366,38 @@ export const emotionSoundProfiles: Record<EmotionId, TargetSoundProfile> = {
     reverbDecay: 5,
     stabDuration: "1n",
     bassSubdivision: "1m",
+  }),
+
+  anxious: profile("anxious", {
+    drums: drumsAnxious,
+    synth: {
+      lead: { oscillator: "sine", envelope: { decay: 0.48, release: 0.7 }, volume: -16 },
+      pad: { oscillator: "sine", envelope: { attack: 1.3, release: 3.8 }, volume: -23 },
+      bass: { oscillator: "sine", envelope: { decay: 0.42 }, volume: -9 },
+    },
+    bpm: 123,
+    keysFilterHz: 1120,
+    stabStyle: "syncopated",
+    hookPattern: "chopped",
+    reverbDecay: 3.6,
+    stabDuration: "16n",
+    bassSubdivision: "2n",
+  }),
+
+  stress: profile("stress", {
+    drums: drumsStress,
+    synth: {
+      lead: { oscillator: "triangle", envelope: { decay: 0.4 }, volume: -14 },
+      pad: { oscillator: "triangle", envelope: { attack: 0.85, release: 2.5 }, volume: -20 },
+      bass: { oscillator: "sine", envelope: { decay: 0.3 }, volume: -8 },
+    },
+    bpm: 124,
+    keysFilterHz: 1420,
+    stabStyle: "offbeat",
+    hookPattern: "syncopated",
+    reverbDecay: 3.2,
+    stabDuration: "8n",
+    bassSubdivision: "4n",
   }),
 }
 
