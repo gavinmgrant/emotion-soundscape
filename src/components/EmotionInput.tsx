@@ -41,9 +41,11 @@ import type { EmotionInputProps } from "@/types"
 const EmotionInput = ({
   handleToggleAudio,
   isAudioEnabled,
+  isLoadingSamples,
   intensity,
   beatSpeed,
   emotion,
+  regulationLabel,
   setIntensity,
   setBeatSpeed,
   setEmotion,
@@ -55,7 +57,7 @@ const EmotionInput = ({
   const [open, setOpen] = useState(false)
 
   return (
-    <AnimatePresence>
+    <AnimatePresence initial={false}>
       {showControls && (
         <motion.div
           className="absolute bottom-0 flex w-full max-w-md flex-col gap-3 p-3 sm:w-1/2"
@@ -64,6 +66,13 @@ const EmotionInput = ({
           exit={{ opacity: 0, y: 240 }}
           transition={{ duration: 0.25 }}
         >
+          <p
+            className="min-h-5 text-center text-sm text-white/70"
+            aria-live="polite"
+          >
+            {regulationLabel ?? "\u00A0"}
+          </p>
+
           {/* Emotion selection dropdown */}
           <Popover open={open} onOpenChange={setOpen}>
             <PopoverTrigger asChild>
@@ -78,7 +87,7 @@ const EmotionInput = ({
                       (emo: { value: string; label: string }) =>
                         emo.value === emotion,
                     )?.label
-                  : "Select an emotion..."}
+                  : "How are you feeling?"}
                 <ChevronsUpDown className="opacity-50" />
               </Button>
             </PopoverTrigger>
@@ -116,33 +125,34 @@ const EmotionInput = ({
               </Command>
             </PopoverContent>
           </Popover>
-          
+
           {/* Audio playback toggle button */}
           <Button
             className="w-full"
             onClick={handleToggleAudio}
-            disabled={!emotion}
+            disabled={!emotion || isLoadingSamples}
           >
-            {isAudioEnabled ? (
+            {isLoadingSamples ? (
+              <span className="flex items-center gap-1">Loading sounds…</span>
+            ) : isAudioEnabled ? (
               <span className="flex items-center gap-1">Pause {<Pause />}</span>
             ) : (
               <span className="flex items-center gap-1">Play {<Play />}</span>
             )}
           </Button>
           
-          {/* Intensity control slider */}
+          {/* Immersion control slider */}
           <div className="flex items-center justify-between gap-4">
             <Button
               className="w-24"
               onClick={() => setIntensity([intensity[0] - step])}
             >
-              <ChevronLeft /> Lower
+              <ChevronLeft /> Less
             </Button>
             <Slider
               min={0.2}
               max={0.8}
               step={step}
-              defaultValue={intensity}
               value={intensity}
               onValueChange={(e) => setIntensity([e[0]])}
             />
@@ -150,11 +160,11 @@ const EmotionInput = ({
               className="w-24 text-right"
               onClick={() => setIntensity([intensity[0] + step])}
             >
-              Higher <ChevronRight />
+              More <ChevronRight />
             </Button>
           </div>
-          
-          {/* Beat speed control slider */}
+
+          {/* Tempo control slider */}
           <div className="flex items-center justify-between gap-4">
             <Button
               className="w-24"
@@ -166,7 +176,6 @@ const EmotionInput = ({
               min={0.2}
               max={0.8}
               step={step}
-              defaultValue={beatSpeed}
               value={beatSpeed}
               onValueChange={(e) => setBeatSpeed([e[0]])}
             />

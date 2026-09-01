@@ -1,136 +1,166 @@
-import type { EmotionSequence, EmotionTiming, Emotion } from "@/types"
+import type {
+  Emotion,
+  EmotionRegulationTarget,
+  EmotionSequence,
+  EmotionTimingLegacy,
+} from "@/types"
+import type { EmotionAudioConfig } from "@/lib/audio/types"
+import {
+  emotionSoundProfiles,
+  type EmotionId,
+} from "@/lib/audio/emotionSoundProfiles"
+import type { RegulationTargetId } from "@/lib/audio/targetProfiles"
+import { applyProgressiveHouse } from "@/lib/audio/progressiveHouseProduction"
 
-export const emotionSequences: EmotionSequence = {
-  happiness: ["C4", ["E4", "G4", "C5"], "A4", "D5", "E5"], // Major, uplifting
-  sadness: ["D4", ["F4", "A4"], "C4", "D5", "E5"], // Minor, melancholic
-  fear: ["C4", ["Db4", "E4", "Ab4"], "B3", "C5", "C#5"], // Dissonant, suspenseful
-  anger: ["E4", ["G4", "Bb4"], "D4", "F4", "G#4"], // Sharp and punchy
-  surprise: ["G4", ["B4", "E5"], "F#4", "A5", "C5"], // Unexpected jumps
-  disgust: ["F4", ["Ab4", "B4"], "Eb4", "G4", "C#5"], // Dissonant, uneasy
-  love: ["A3", ["D4", "F#4", "B4"], "E4", "C#5", "D5"], // Warm, emotional
-  guilt: ["Bb3", ["Db4", "F4"], "Ab3", "Eb4", "Bb4"], // Minor, regretful
-  pride: ["C4", ["E4", "G4"], "A4", "F5", "C5"], // Triumphant
-  jealousy: ["D4", ["F4", "Ab4"], "C4", "D#4", "A#4"], // Tense, uneasy
-  hope: ["G3", ["B3", "D4", "G4"], "C4", "E4", "F#4"], // Rising motion
-  embarrassment: ["E3", ["G3", "C4"], "F3", "A4", "D4"], // Awkward pauses
-  relief: ["G3", ["C4", "E4"], "D4", "G4", "B4"], // Resolution-focused
-  gratitude: ["F3", ["A3", "C4"], "G3", "D4", "E4"], // Warm, balanced
-}
-
-export const emotionTimings: EmotionTiming = {
-  happiness: {
-    intensity: 0.7,
-    beatSpeed: 0.8,
-  },
-  sadness: {
-    intensity: 0.3,
-    beatSpeed: 0.4,
-  },
-  fear: {
-    intensity: 0.9,
-    beatSpeed: 0.9,
-  },
+const EMOTION_META: Record<
+  EmotionId,
+  {
+    regulationTarget: RegulationTargetId
+    regulationLabel: string
+    timing: { intensity: number; beatSpeed: number }
+  }
+> = {
   anger: {
-    intensity: 1.0,
-    beatSpeed: 0.9,
-  },
-  surprise: {
-    intensity: 0.8,
-    beatSpeed: 1.0,
+    regulationTarget: "calm",
+    regulationLabel: "Helping you feel calm",
+    timing: { intensity: 0.5, beatSpeed: 0.58 },
   },
   disgust: {
-    intensity: 0.7,
-    beatSpeed: 0.5,
+    regulationTarget: "calm",
+    regulationLabel: "Helping you feel calm",
+    timing: { intensity: 0.4, beatSpeed: 0.52 },
+  },
+  sadness: {
+    regulationTarget: "hope",
+    regulationLabel: "Helping you feel hopeful",
+    timing: { intensity: 0.5, beatSpeed: 0.65 },
+  },
+  fear: {
+    regulationTarget: "safety",
+    regulationLabel: "Helping you feel safe",
+    timing: { intensity: 0.4, beatSpeed: 0.55 },
+  },
+  surprise: {
+    regulationTarget: "grounded",
+    regulationLabel: "Helping you feel grounded",
+    timing: { intensity: 0.6, beatSpeed: 0.7 },
+  },
+  happiness: {
+    regulationTarget: "joy",
+    regulationLabel: "Sustaining your joy",
+    timing: { intensity: 0.7, beatSpeed: 0.8 },
   },
   love: {
-    intensity: 0.6,
-    beatSpeed: 0.6,
+    regulationTarget: "warmth",
+    regulationLabel: "Helping you feel warmth",
+    timing: { intensity: 0.6, beatSpeed: 0.62 },
   },
   guilt: {
-    intensity: 0.4,
-    beatSpeed: 0.3,
+    regulationTarget: "relief",
+    regulationLabel: "Helping you feel relief",
+    timing: { intensity: 0.35, beatSpeed: 0.48 },
   },
   pride: {
-    intensity: 0.8,
-    beatSpeed: 0.7,
+    regulationTarget: "confidence",
+    regulationLabel: "Building your confidence",
+    timing: { intensity: 0.65, beatSpeed: 0.72 },
   },
   jealousy: {
-    intensity: 0.6,
-    beatSpeed: 0.5,
+    regulationTarget: "self-assurance",
+    regulationLabel: "Helping you feel self-assured",
+    timing: { intensity: 0.5, beatSpeed: 0.58 },
   },
   hope: {
-    intensity: 0.5,
-    beatSpeed: 0.7,
+    regulationTarget: "uplift",
+    regulationLabel: "Lifting your spirits",
+    timing: { intensity: 0.55, beatSpeed: 0.72 },
   },
   embarrassment: {
-    intensity: 0.5,
-    beatSpeed: 0.4,
+    regulationTarget: "comfort",
+    regulationLabel: "Helping you feel comfort",
+    timing: { intensity: 0.4, beatSpeed: 0.52 },
   },
   relief: {
-    intensity: 0.2,
-    beatSpeed: 0.3,
+    regulationTarget: "gratitude",
+    regulationLabel: "Helping you feel gratitude",
+    timing: { intensity: 0.35, beatSpeed: 0.48 },
   },
   gratitude: {
-    intensity: 0.5,
-    beatSpeed: 0.5,
+    regulationTarget: "peace",
+    regulationLabel: "Helping you feel peace",
+    timing: { intensity: 0.45, beatSpeed: 0.52 },
   },
 }
 
+function buildEmotionConfig(emotion: EmotionId): EmotionAudioConfig {
+  const profile = applyProgressiveHouse(emotion, emotionSoundProfiles[emotion])
+  const meta = EMOTION_META[emotion]
+
+  return {
+    regulationTarget: meta.regulationTarget,
+    regulationLabel: meta.regulationLabel,
+    melody: profile.melody,
+    harmony: profile.harmony,
+    bass: profile.bass,
+    drums: profile.drums,
+    synth: profile.synth,
+    timing: { ...meta.timing, bpm: profile.bpm },
+    sound: {
+      keysFilterHz: profile.keysFilterHz,
+      stabStyle: profile.stabStyle,
+      hookPattern: profile.hookPattern,
+      reverbDecay: profile.reverbDecay,
+      stabDuration: profile.stabDuration,
+      bassSubdivision: profile.bassSubdivision,
+    },
+  }
+}
+
+export const emotionAudioConfigs: Record<string, EmotionAudioConfig> =
+  Object.fromEntries(
+    (Object.keys(EMOTION_META) as EmotionId[]).map((emotion) => [
+      emotion,
+      buildEmotionConfig(emotion),
+    ]),
+  )
+
+export const emotionRegulationTargets: Record<string, EmotionRegulationTarget> =
+  Object.fromEntries(
+    Object.entries(emotionAudioConfigs).map(([key, config]) => [
+      key,
+      { target: config.regulationTarget, label: config.regulationLabel },
+    ]),
+  )
+
+/** @deprecated Use emotionAudioConfigs instead */
+export const emotionSequences: EmotionSequence = Object.fromEntries(
+  Object.entries(emotionAudioConfigs).map(([key, config]) => [
+    key,
+    config.melody,
+  ]),
+)
+
+/** @deprecated Use emotionAudioConfigs instead */
+export const emotionTimings: EmotionTimingLegacy = Object.fromEntries(
+  Object.entries(emotionAudioConfigs).map(([key, config]) => [
+    key,
+    { intensity: config.timing.intensity, beatSpeed: config.timing.beatSpeed },
+  ]),
+)
+
 export const emotions: Emotion[] = [
-  {
-    value: "happiness",
-    label: "Happiness",
-  },
-  {
-    value: "sadness",
-    label: "Sadness",
-  },
-  {
-    value: "fear",
-    label: "Fear",
-  },
-  {
-    value: "anger",
-    label: "Anger",
-  },
-  {
-    value: "surprise",
-    label: "Surprise",
-  },
-  {
-    value: "disgust",
-    label: "Disgust",
-  },
-  {
-    value: "love",
-    label: "Love",
-  },
-  {
-    value: "guilt",
-    label: "Guilt",
-  },
-  {
-    value: "pride",
-    label: "Pride",
-  },
-  {
-    value: "jealousy",
-    label: "Jealousy",
-  },
-  {
-    value: "hope",
-    label: "Hope",
-  },
-  {
-    value: "embarrassment",
-    label: "Embarrassment",
-  },
-  {
-    value: "relief",
-    label: "Relief",
-  },
-  {
-    value: "gratitude",
-    label: "Gratitude",
-  },
+  { value: "happiness", label: "Happiness" },
+  { value: "sadness", label: "Sadness" },
+  { value: "fear", label: "Fear" },
+  { value: "anger", label: "Anger" },
+  { value: "surprise", label: "Surprise" },
+  { value: "disgust", label: "Disgust" },
+  { value: "love", label: "Love" },
+  { value: "guilt", label: "Guilt" },
+  { value: "pride", label: "Pride" },
+  { value: "jealousy", label: "Jealousy" },
+  { value: "hope", label: "Hope" },
+  { value: "embarrassment", label: "Embarrassment" },
+  { value: "relief", label: "Relief" },
+  { value: "gratitude", label: "Gratitude" },
 ]
