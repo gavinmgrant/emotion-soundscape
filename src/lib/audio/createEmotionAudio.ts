@@ -1,6 +1,12 @@
 import * as Tone from "tone"
 import { createArrangement } from "./createArrangement"
 import { createDrumKit } from "./createDrumKit"
+import {
+  createPianoWidth,
+  createRichBass,
+  createRichHook,
+  createRichPad,
+} from "./createRichVoices"
 import { getDrumSamples, getPiano } from "./sampleLibrary"
 import {
   buildHookPattern,
@@ -13,7 +19,6 @@ import type {
   EmotionAudioCallbacks,
   EmotionAudioConfig,
   EmotionAudioInstance,
-  EmotionSynthVoice,
 } from "./types"
 import { emitVisualEvent, noteToFrequency } from "./visualEvents"
 
@@ -32,32 +37,26 @@ function createSidechainBus(destination: Tone.ToneAudioNode) {
   }
 }
 
-function buildSynthOptions(voice: EmotionSynthVoice) {
-  return {
-    oscillator: { type: voice.oscillator },
-    envelope: {
-      attack: voice.envelope?.attack ?? 0.08,
-      decay: voice.envelope?.decay ?? 0.45,
-      sustain: voice.envelope?.sustain ?? 0.35,
-      release: voice.envelope?.release ?? 1.1,
-    },
-  }
-}
-
-function buildPadOptions(voice: EmotionSynthVoice) {
-  return {
-    oscillator: { type: voice.oscillator },
-    envelope: {
-      attack: voice.envelope?.attack ?? 1.4,
-      decay: voice.envelope?.decay ?? 0.4,
-      sustain: voice.envelope?.sustain ?? 0.72,
-      release: voice.envelope?.release ?? 3.8,
-    },
-  }
-}
-
 function chordToNotes(chord: string | string[]): string[] {
   return Array.isArray(chord) ? chord : [chord]
+}
+
+function padVoicing(chord: string | string[]): string[] {
+  const notes = chordToNotes(chord)
+  if (notes.length >= 3) return notes
+
+  const root = notes[0]
+  if (!root) return notes
+
+  const match = root.match(/^([A-Ga-g])([#b]?)(-?\d+)$/)
+  if (!match) return notes
+
+  const letter = match[1].toUpperCase()
+  const accidental = match[2] ?? ""
+  const octave = Number.parseInt(match[3], 10)
+  const upperOctave = `${letter}${accidental}${octave + 1}`
+
+  return [...notes, upperOctave]
 }
 
 export function createEmotionAudio(
@@ -76,7 +75,7 @@ export function createEmotionAudio(
   const limiter = new Tone.Limiter(-1).toDestination()
   const masterGain = new Tone.Gain(0.48).connect(limiter)
 
-  const reverb = new Tone.Reverb({ decay: sound.reverbDecay, wet: 0.42 })
+  const reverb = new Tone.Reverb({ decay: sound.reverbDecay, wet: 0.48 })
   const reverbGain = new Tone.Gain(1).connect(reverb)
   reverb.connect(masterGain)
 
@@ -108,45 +107,30 @@ export function createEmotionAudio(
   })
   keysFilter.connect(keysSidechain.gain)
 
+  const pianoWidth = createPianoWidth(keysFilter)
   const piano = getPiano()
-  piano.volume.value = -15
-  piano.connect(keysFilter)
+  piano.volume.value = -14
+  piano.connect(pianoWidth.input)
 
   const padFilter = new Tone.Filter({
-    frequency: 2200,
+    frequency: 2400,
     type: "lowpass",
-    Q: 0.35,
+    Q: 0.3,
   })
   padFilter.connect(padSidechain.gain)
 
-  const pad = new Tone.PolySynth(Tone.Synth, buildPadOptions(config.synth.pad))
-  pad.connect(padFilter)
-  pad.volume.value = config.synth.pad.volume ?? -18
+  const padVoice = createRichPad(config.synth.pad, padFilter)
 
-  const bass = new Tone.MonoSynth({
-    ...buildSynthOptions(config.synth.bass),
-    filter: { Q: 0.8, type: "lowpass", rolloff: -24 },
-    filterEnvelope: {
-      attack: 0.04,
-      decay: 0.35,
-      sustain: 0.35,
-      release: 0.35,
-      baseFrequency: 80,
-      octaves: 0.8,
-    },
-  }).connect(bassSidechain.gain)
-  bass.volume.value = config.synth.bass.volume ?? -9
+  const bassVoice = createRichBass(config.synth.bass, bassSidechain.gain)
 
   const hookDelay = new Tone.FeedbackDelay({
     delayTime: "8n.",
-    feedback: 0.22,
-    wet: 0.38,
+    feedback: 0.28,
+    wet: 0.42,
   })
   hookDelay.connect(hookGain)
 
-  const hook = new Tone.PolySynth(Tone.Synth, buildSynthOptions(config.synth.lead))
-  hook.connect(hookDelay)
-  hook.volume.value = config.synth.lead.volume ?? -13
+  const hookVoice = createRichHook(config.synth.lead, hookDelay)
 
   const handleKickSidechain = (time: number) => {
     bassSidechain.duck(time)
@@ -181,7 +165,7 @@ export function createEmotionAudio(
   const keysSequence = new Tone.Sequence(
     (time, note) => {
       if (note) {
-        const velocity = sound.stabStyle === "sparse" ? 0.42 : 0.58
+        const velocity = sound.stabStyle === "sparse" ? 0.48 : 0.62
         piano.triggerAttackRelease(note, sound.stabDuration, time, velocity)
         emitVisualEvent(callbacks.onVisualEvent, {
           layer: "keys",
@@ -201,8 +185,8 @@ export function createEmotionAudio(
   const padSequence = new Tone.Sequence(
     (time, chord) => {
       if (chord) {
-        const notes = chordToNotes(chord)
-        pad.triggerAttackRelease(notes, "1m", time, 0.52)
+        const notes = padVoicing(chord)
+        padVoice.synth.triggerAttackRelease(notes, "1m", time, 0.54)
         emitVisualEvent(callbacks.onVisualEvent, {
           layer: "pad",
           velocity: 0.52,
@@ -225,7 +209,7 @@ export function createEmotionAudio(
             : sound.bassSubdivision === "2n"
               ? "2n"
               : "1m"
-        bass.triggerAttackRelease(note, dur, time, 0.82)
+        bassVoice.synth.triggerAttackRelease(note, dur, time, 0.82)
         emitVisualEvent(callbacks.onVisualEvent, {
           layer: "bass",
           velocity: 0.82,
@@ -256,7 +240,7 @@ export function createEmotionAudio(
         if (note) {
           const hookVel =
             sound.hookPattern === "anthem" ? 0.72 : 0.58
-          hook.triggerAttackRelease(note, hookDuration, time, hookVel)
+          hookVoice.synth.triggerAttackRelease(note, hookDuration, time, hookVel)
           emitVisualEvent(callbacks.onVisualEvent, {
             layer: "hook",
             velocity: hookVel,
@@ -301,9 +285,10 @@ export function createEmotionAudio(
     dispose: () => {
       allSequences.forEach((seq) => seq.dispose())
       piano.disconnect()
-      pad.dispose()
-      bass.dispose()
-      hook.dispose()
+      pianoWidth.dispose()
+      padVoice.dispose()
+      bassVoice.dispose()
+      hookVoice.dispose()
       drumKit.dispose()
       arrangement.dispose()
       reverb.dispose()

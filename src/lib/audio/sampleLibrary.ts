@@ -59,7 +59,7 @@ class SampleLibrary {
     const piano = new Tone.Sampler({
       urls: PIANO_SAMPLE_URLS_LITE,
       baseUrl: PIANO_SAMPLE_BASE_URL,
-      release: 1.4,
+      release: 2.2,
       attack: 0.003,
     })
 
