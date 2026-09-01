@@ -1,9 +1,12 @@
-/** Local drum one-shots (from Tonejs/audio, MIT-licensed collections) */
+/** Kit8 electronic drum one-shots (Tonejs/audio, MIT-licensed) */
+export const DRUM_808_BASE_URL =
+  "https://tonejs.github.io/audio/drum-samples/Kit8/"
+
+/** Sampled 808-adjacent voices — kick is synthesized separately */
 export const DRUM_SAMPLE_PATHS = {
-  kick: "/samples/drums/kick.mp3",
-  snare: "/samples/drums/snare.mp3",
-  hihatClosed: "/samples/drums/hihat-closed.mp3",
-  hihatOpen: "/samples/drums/hihat-open.mp3",
+  snare: `${DRUM_808_BASE_URL}snare.mp3`,
+  hihatClosed: `${DRUM_808_BASE_URL}hihat.mp3`,
+  hihatOpen: `${DRUM_808_BASE_URL}hihat.mp3`,
   shaker: "/samples/drums/shaker.mp3",
 } as const
 

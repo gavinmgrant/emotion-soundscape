@@ -1,5 +1,7 @@
 import * as Tone from "tone"
-import type { DrumPlayers } from "./sampleLibrary"
+import { create808Clap } from "./create808Clap"
+import { create808Kick } from "./create808Kick"
+import type { DrumSamples } from "./sampleLibrary"
 import type { EmotionDrums } from "./types"
 import { emitVisualEvent } from "./visualEvents"
 import type { AudioVisualEvent } from "./visualEvents"
@@ -31,7 +33,7 @@ function triggerPlayer(
 
 export function createDrumKit(
   drums: EmotionDrums,
-  players: DrumPlayers,
+  samples: DrumSamples,
   destination: Tone.ToneAudioNode,
   onVisualEvent?: (event: AudioVisualEvent) => void,
   onKickSidechain?: (time: number) => void,
@@ -39,30 +41,30 @@ export function createDrumKit(
   const kickGain = new Tone.Gain(1).connect(destination)
   const percGain = new Tone.Gain(1).connect(destination)
 
-  players.kick.disconnect()
-  players.snare.disconnect()
-  players.hihatClosed.disconnect()
-  players.hihatOpen.disconnect()
-  players.shaker.disconnect()
+  const kick = create808Kick(kickGain)
+  const clap = create808Clap(percGain)
 
-  players.kick.connect(kickGain)
-  players.snare.connect(percGain)
-  players.hihatClosed.connect(percGain)
-  players.hihatOpen.connect(percGain)
-  players.shaker.connect(percGain)
+  samples.snare.disconnect()
+  samples.hihatClosed.disconnect()
+  samples.hihatOpen.disconnect()
+  samples.shaker.disconnect()
 
-  players.kick.volume.value = -3
-  players.snare.volume.value = -10
-  players.hihatClosed.volume.value = -18
-  players.hihatOpen.volume.value = -16
-  players.shaker.volume.value = -22
+  samples.snare.connect(percGain)
+  samples.hihatClosed.connect(percGain)
+  samples.hihatOpen.connect(percGain)
+  samples.shaker.connect(percGain)
+
+  samples.snare.volume.value = -14
+  samples.hihatClosed.volume.value = -17
+  samples.hihatOpen.volume.value = -15
+  samples.shaker.volume.value = -22
 
   const sequences: Tone.Sequence[] = []
 
   const kickSequence = new Tone.Sequence(
     (time, hit) => {
       if (hit) {
-        triggerPlayer(players.kick, time, 0.95)
+        kick.trigger(time, 0.95)
         onKickSidechain?.(time)
         emitVisualEvent(onVisualEvent, {
           layer: "kick",
@@ -79,11 +81,11 @@ export function createDrumKit(
   const clapSequence = new Tone.Sequence(
     (time, hit) => {
       if (hit) {
-        triggerPlayer(players.snare, time, 0.85)
-        triggerPlayer(players.snare, time + 0.012, 0.45)
+        triggerPlayer(samples.snare, time, 0.55, 0.08)
+        clap.trigger(time, 0.88)
         emitVisualEvent(onVisualEvent, {
           layer: "snare",
-          velocity: 0.85,
+          velocity: 0.88,
           time,
         })
       }
@@ -96,10 +98,10 @@ export function createDrumKit(
   const closedHatSequence = new Tone.Sequence(
     (time, hit) => {
       if (hit) {
-        triggerPlayer(players.hihatClosed, time, 0.55, 0.05)
+        triggerPlayer(samples.hihatClosed, time, 0.58, 0.04)
         emitVisualEvent(onVisualEvent, {
           layer: "hat",
-          velocity: 0.55,
+          velocity: 0.58,
           time,
         })
       }
@@ -114,7 +116,7 @@ export function createDrumKit(
   const openHatSequence = new Tone.Sequence(
     (time, hit) => {
       if (hit) {
-        triggerPlayer(players.hihatOpen, time, 0.5, 0.15)
+        triggerPlayer(samples.hihatOpen, time, 0.52, 0.18)
         emitVisualEvent(onVisualEvent, {
           layer: "hat",
           velocity: 0.65,
@@ -131,7 +133,7 @@ export function createDrumKit(
   const shakerSequence = new Tone.Sequence(
     (time, hit) => {
       if (hit) {
-        triggerPlayer(players.shaker, time, 0.35, 0.04)
+        triggerPlayer(samples.shaker, time, 0.35, 0.04)
         emitVisualEvent(onVisualEvent, {
           layer: "hat",
           velocity: 0.35,
@@ -156,11 +158,12 @@ export function createDrumKit(
     },
     dispose: () => {
       sequences.forEach((seq) => seq.dispose())
-      players.kick.disconnect()
-      players.snare.disconnect()
-      players.hihatClosed.disconnect()
-      players.hihatOpen.disconnect()
-      players.shaker.disconnect()
+      kick.dispose()
+      clap.dispose()
+      samples.snare.disconnect()
+      samples.hihatClosed.disconnect()
+      samples.hihatOpen.disconnect()
+      samples.shaker.disconnect()
       kickGain.dispose()
       percGain.dispose()
     },

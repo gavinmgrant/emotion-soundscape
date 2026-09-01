@@ -1,7 +1,7 @@
 import * as Tone from "tone"
 import { createArrangement } from "./createArrangement"
 import { createDrumKit } from "./createDrumKit"
-import { getDrumPlayers, getPiano } from "./sampleLibrary"
+import { getDrumSamples, getPiano } from "./sampleLibrary"
 import {
   buildHookPattern,
   buildStabEvents,
@@ -157,7 +157,7 @@ export function createEmotionAudio(
 
   const drumKit = createDrumKit(
     config.drums,
-    getDrumPlayers(),
+    getDrumSamples(),
     drumBus,
     callbacks.onVisualEvent,
     handleKickSidechain,

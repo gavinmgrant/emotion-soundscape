@@ -5,8 +5,8 @@ import {
   PIANO_SAMPLE_URLS_LITE,
 } from "./sampleConfig"
 
-export interface DrumPlayers {
-  kick: Tone.Player
+/** Sampled drum one-shots — kick and clap are synthesized in createDrumKit */
+export interface DrumSamples {
   snare: Tone.Player
   hihatClosed: Tone.Player
   hihatOpen: Tone.Player
@@ -17,7 +17,7 @@ class SampleLibrary {
   private static instance: SampleLibrary | null = null
   private loadPromise: Promise<void> | null = null
 
-  drums: DrumPlayers | null = null
+  drums: DrumSamples | null = null
   piano: Tone.Sampler | null = null
 
   static getInstance(): SampleLibrary {
@@ -39,21 +39,17 @@ class SampleLibrary {
   }
 
   private async loadAll(): Promise<void> {
-    const kick = new Tone.Player({
-      url: DRUM_SAMPLE_PATHS.kick,
-      fadeOut: 0.02,
-    })
     const snare = new Tone.Player({
       url: DRUM_SAMPLE_PATHS.snare,
-      fadeOut: 0.03,
+      fadeOut: 0.025,
     })
     const hihatClosed = new Tone.Player({
       url: DRUM_SAMPLE_PATHS.hihatClosed,
-      fadeOut: 0.01,
+      fadeOut: 0.008,
     })
     const hihatOpen = new Tone.Player({
       url: DRUM_SAMPLE_PATHS.hihatOpen,
-      fadeOut: 0.04,
+      fadeOut: 0.035,
     })
     const shaker = new Tone.Player({
       url: DRUM_SAMPLE_PATHS.shaker,
@@ -67,14 +63,13 @@ class SampleLibrary {
       attack: 0.003,
     })
 
-    this.drums = { kick, snare, hihatClosed, hihatOpen, shaker }
+    this.drums = { snare, hihatClosed, hihatOpen, shaker }
     this.piano = piano
 
     await Tone.loaded()
   }
 
   dispose(): void {
-    this.drums?.kick.dispose()
     this.drums?.snare.dispose()
     this.drums?.hihatClosed.dispose()
     this.drums?.hihatOpen.dispose()
@@ -93,7 +88,7 @@ export function loadAudioSamples(): Promise<void> {
   return sampleLibrary.load()
 }
 
-export function getDrumPlayers(): DrumPlayers {
+export function getDrumSamples(): DrumSamples {
   if (!sampleLibrary.drums) {
     throw new Error("Drum samples not loaded — call loadAudioSamples() first")
   }
