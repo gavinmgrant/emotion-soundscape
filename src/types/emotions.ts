@@ -39,6 +39,6 @@ export interface EmotionInputProps {
   regulationLabel?: string
   setIntensity: (e: number[]) => void
   setBeatSpeed: (e: number[]) => void
-  setEmotion: (e: string) => void
+  onEmotionChange: (emotion: string) => void
   showControls: boolean
 }

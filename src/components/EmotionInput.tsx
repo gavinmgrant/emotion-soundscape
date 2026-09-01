@@ -48,7 +48,7 @@ const EmotionInput = ({
   regulationLabel,
   setIntensity,
   setBeatSpeed,
-  setEmotion,
+  onEmotionChange,
   showControls,
 }: EmotionInputProps) => {
   // Step size for intensity and beat speed adjustments
@@ -105,7 +105,7 @@ const EmotionInput = ({
                         key={emo.value}
                         value={emo.value}
                         onSelect={(currentEmotion: string) => {
-                          setEmotion(
+                          onEmotionChange(
                             currentEmotion === emotion ? "" : currentEmotion,
                           )
                           setOpen(false)

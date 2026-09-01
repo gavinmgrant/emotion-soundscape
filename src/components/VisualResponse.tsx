@@ -60,38 +60,62 @@ const VisualResponse = () => {
     setIsMounted(true)
   }, [])
 
-  useEffect(() => {
-    if (emotion) {
-      setIntensity([emotionTimings[emotion].intensity])
-      setBeatSpeed([emotionTimings[emotion].beatSpeed])
-    }
-  }, [emotion])
+  const stopAudio = useCallback(async () => {
+    Tone.getTransport().stop()
+    setIsAudioEnabled(false)
+  }, [])
 
-  const handleToggleAudio = useCallback(async () => {
+  const startAudio = useCallback(async () => {
+    if (isLoadingSamples) return
+
     try {
-      const transport = Tone.getTransport()
-
-      if (isAudioEnabled) {
-        await transport.stop()
-        setIsAudioEnabled(false)
-        return
-      }
-
       await Tone.start()
       await Tone.getContext().resume()
 
-      setIsLoadingSamples(true)
-      await loadAudioSamples()
-      setSamplesReady(true)
-      setIsLoadingSamples(false)
+      if (!samplesReady) {
+        setIsLoadingSamples(true)
+        await loadAudioSamples()
+        setSamplesReady(true)
+        setIsLoadingSamples(false)
+      }
 
-      await transport.start()
+      const transport = Tone.getTransport()
+      if (transport.state !== "started") {
+        await transport.start()
+      }
       setIsAudioEnabled(true)
     } catch (error) {
       console.error("Error starting audio:", error)
       setIsLoadingSamples(false)
     }
-  }, [isAudioEnabled])
+  }, [isLoadingSamples, samplesReady])
+
+  const handleEmotionChange = useCallback(
+    async (newEmotion: string) => {
+      setEmotion(newEmotion)
+
+      if (newEmotion && emotionTimings[newEmotion]) {
+        setIntensity([emotionTimings[newEmotion].intensity])
+        setBeatSpeed([emotionTimings[newEmotion].beatSpeed])
+      }
+
+      if (!newEmotion) {
+        await stopAudio()
+        return
+      }
+
+      await startAudio()
+    },
+    [startAudio, stopAudio],
+  )
+
+  const handleToggleAudio = useCallback(async () => {
+    if (isAudioEnabled) {
+      await stopAudio()
+    } else if (emotion) {
+      await startAudio()
+    }
+  }, [emotion, isAudioEnabled, startAudio, stopAudio])
 
   const sceneProps: SceneCanvasProps = {
     intensity: intensity[0],
@@ -124,7 +148,7 @@ const VisualResponse = () => {
         }
         setIntensity={setIntensity}
         setBeatSpeed={setBeatSpeed}
-        setEmotion={setEmotion}
+        onEmotionChange={handleEmotionChange}
         showControls={showControls}
       />
     </div>
