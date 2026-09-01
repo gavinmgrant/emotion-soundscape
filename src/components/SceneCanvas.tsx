@@ -128,8 +128,13 @@ export default function SceneCanvas({
   emotion,
 }: SceneCanvasProps) {
   return (
-    <Canvas className="h-full w-full" camera={{ position: [0, 0, 20], fov: 30 }}>
+    <Canvas
+      className="h-full w-full"
+      camera={{ position: [0, 0, 20], fov: 30 }}
+      onContextMenu={(event) => event.preventDefault()}
+    >
       <OrbitControls
+        enablePan={false}
         minAzimuthAngle={0}
         maxAzimuthAngle={0}
         minPolarAngle={0}
