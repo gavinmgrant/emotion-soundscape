@@ -1,4 +1,5 @@
 import type { AudioVisualEvent, VisualLayer } from "@/lib/audio/visualEvents"
+import type { EmotionVisualTint } from "./emotionVisualPalette"
 
 export interface VisualEnergyState {
   kick: number
@@ -11,6 +12,14 @@ export interface VisualEnergyState {
   pitch: number
   keysAzimuth: number
   hookAzimuth: number
+}
+
+export interface VisualMotionContext {
+  time: number
+  beatSpeed: number
+  intensity: number
+  isAudioEnabled: boolean
+  emotionTint: EmotionVisualTint
 }
 
 const LAYER_DECAY: Record<VisualLayer, number> = {
@@ -80,7 +89,6 @@ function angleDiff(a: number, b: number): number {
   return diff
 }
 
-/** Deterministic 0–1 hash for hat grain */
 function hash2D(x: number, z: number): number {
   const s = Math.sin(x * 12.9898 + z * 78.233) * 43758.5453
   return s - Math.floor(s)
@@ -91,6 +99,10 @@ function smoothstep(edge0: number, edge1: number, x: number): number {
   return t * t * (3 - 2 * t)
 }
 
+function lerp(a: number, b: number, t: number): number {
+  return a + (b - a) * t
+}
+
 export interface DecomposedPointVisual {
   height: number
   r: number
@@ -99,74 +111,100 @@ export interface DecomposedPointVisual {
 }
 
 /**
- * Per-layer spatial kernels summed into one point's height and color.
- * Each audio layer owns a distinct region / shape on the grid.
+ * Per-layer spatial kernels summed into one point's height, color, and size.
+ * Time-driven phases keep the grid alive between discrete audio events.
  */
 export function computeDecomposedPointVisual(
   x: number,
   z: number,
   energy: VisualEnergyState,
-  intensity: number,
+  motion: VisualMotionContext,
 ): DecomposedPointVisual {
+  const { time, beatSpeed, intensity, isAudioEnabled, emotionTint } = motion
+  const tempo = 0.65 + beatSpeed * 1.35
   const distance = Math.sqrt(x * x + z * z)
   const angle = Math.atan2(z, x)
 
-  const kickPhase = energy.kick * 9
+  const life = isAudioEnabled ? 1 : 0.35
+  const ambient =
+    Math.sin(x * 0.48 + time * 0.62 * tempo) *
+    Math.cos(z * 0.42 + time * 0.54 * tempo) *
+    0.14 *
+    life *
+    (0.2 + intensity * 0.8)
+
+  const padSwell =
+    Math.sin(distance * 0.22 - time * 0.35 * tempo) *
+    energy.pad *
+    0.35 *
+    intensity
+
+  const kickPhase = time * 5.5 * tempo + energy.kick * 9
   const centerFalloff = Math.max(0, 1 - distance / 6.5)
   const kickHeight =
-    Math.sin(distance * 2 - kickPhase) *
-    energy.kick *
-    2.4 *
+    Math.sin(distance * 2.1 - kickPhase) *
+    (energy.kick * 2.6 + 0.08) *
     intensity *
     centerFalloff
 
-  const bassPhase = energy.bass * 4.5
-  const outerMask = smoothstep(2.5, 5.5, distance) * (1 - smoothstep(7.5, 9.5, distance))
+  const bassPhase = time * 2.4 * tempo + energy.bass * 4.5
+  const outerMask =
+    smoothstep(2.5, 5.5, distance) * (1 - smoothstep(7.5, 9.5, distance))
   const bassHeight =
     Math.sin(distance * 0.32 - bassPhase) *
     energy.bass *
-    1.7 *
+    1.8 *
     intensity *
     (0.35 + outerMask * 0.65)
 
-  const snarePhase = energy.snare * 14
-  const snareRingPos = 3.2 + energy.snare * 1.5
+  const snarePhase = time * 7.5 * tempo + energy.snare * 14
+  const snareRingPos = 3.2 + energy.snare * 1.5 + Math.sin(time * 2.2) * 0.15
   const snareRing =
-    Math.exp(-Math.pow(distance - snareRingPos, 2) * 1.8) *
+    Math.exp(-Math.pow(distance - snareRingPos, 2) * 1.6) *
     energy.snare *
-    1.5 *
+    1.65 *
     intensity
   const snareWave =
     Math.sin(distance * 5 - snarePhase) *
     energy.snare *
-    0.45 *
+    0.5 *
     intensity *
-    Math.exp(-distance * 0.12)
+    Math.exp(-distance * 0.1)
 
   const hatGrain = (hash2D(x, z) - 0.5) * 2
-  const hatHeight = hatGrain * energy.hat * 0.4 * intensity
+  const hatHeight =
+    hatGrain * energy.hat * 0.45 * intensity +
+    Math.sin(x * 3.1 + z * 2.7 + time * 8 * tempo) *
+      energy.hat *
+      0.08 *
+      intensity
 
-  const keysSpread = Math.exp(-Math.pow(angleDiff(angle, energy.keysAzimuth), 2) * 12)
+  const keysSpread = Math.exp(
+    -Math.pow(angleDiff(angle, energy.keysAzimuth), 2) * 12,
+  )
   const keysHeight =
     keysSpread *
     energy.keys *
-    1.3 *
+    1.35 *
     intensity *
-    (0.45 + 0.55 * Math.sin(distance * 2.2 - energy.keys * 6))
+    (0.45 + 0.55 * Math.sin(distance * 2.2 - time * 3.2 * tempo))
 
-  const hookSpread = Math.exp(-Math.pow(angleDiff(angle, energy.hookAzimuth), 2) * 7)
+  const hookSpread = Math.exp(
+    -Math.pow(angleDiff(angle, energy.hookAzimuth), 2) * 7,
+  )
   const hookHeight =
     hookSpread *
     energy.hook *
-    1.6 *
+    1.7 *
     intensity *
-    Math.sin(distance * 1.1 - energy.hook * 5)
+    Math.sin(distance * 1.1 - time * 2.8 * tempo)
 
-  const padHeight = energy.pad * 0.5 * intensity
+  const padHeight = energy.pad * 0.55 * intensity + padSwell
 
   const edgeFade = Math.max(0, 1 - distance / 10)
   const height =
-    (kickHeight +
+    (ambient +
+      kickHeight +
       bassHeight +
       snareRing +
       snareWave +
@@ -176,21 +214,58 @@ export function computeDecomposedPointVisual(
       padHeight) *
     edgeFade
 
-  const pitchNorm = pitchNormFromFrequency(energy.pitch)
-  const absHeight = Math.min(1, Math.abs(height) * 0.65 + 0.25)
+  // Height-driven white → blue gradient (main branch), more sensitive
+  const heightNorm = Math.min(1, Math.abs(height) * 1.45 + 0.04)
+  const blueIntensity = Math.min(1, heightNorm * 0.82 + 0.18)
+  const whiteIntensity = Math.max(0, 1 - heightNorm * 0.92)
 
-  const padGlow = energy.pad * 0.55
-  const snareFlash = energy.snare * 0.7
-  const melodicGlow = keysSpread * energy.keys * 0.35 + hookSpread * energy.hook * 0.5
+  let r = whiteIntensity
+  let g = whiteIntensity
+  let b = Math.min(1, whiteIntensity + blueIntensity)
 
-  const whiteBase = Math.max(0, 1 - absHeight * 0.65)
-  const warm = pitchNorm * 0.3 + melodicGlow * 0.2
-  const cool = absHeight * (0.7 + pitchNorm * 0.3) + padGlow * 0.25
+  // Emotion tint kicks in as peaks rise
+  const tintAmount = heightNorm * heightNorm * (0.18 + intensity * 0.12)
+  r = lerp(r, emotionTint.r, tintAmount)
+  g = lerp(g, emotionTint.g, tintAmount)
+  b = lerp(b, emotionTint.b, tintAmount)
 
-  return {
-    height,
-    r: Math.min(1, whiteBase + warm * 0.55 + snareFlash * 0.35),
-    g: Math.min(1, whiteBase + warm * 0.2 + padGlow * 0.15),
-    b: Math.min(1, whiteBase + cool),
-  }
+  // Brief flashes on snare / melodic hits at elevated points
+  const peakBoost = heightNorm * (energy.snare * 0.22 + melodicGlowAt(x, z, energy) * 0.15)
+  r = Math.min(1, r + peakBoost)
+  g = Math.min(1, g + peakBoost)
+  b = Math.min(1, b + peakBoost * 0.6)
+
+  return { height, r, g, b }
+}
+
+function melodicGlowAt(
+  x: number,
+  z: number,
+  energy: VisualEnergyState,
+): number {
+  const angle = Math.atan2(z, x)
+  const keysSpread = Math.exp(
+    -Math.pow(angleDiff(angle, energy.keysAzimuth), 2) * 12,
+  )
+  const hookSpread = Math.exp(
+    -Math.pow(angleDiff(angle, energy.hookAzimuth), 2) * 7,
+  )
+  return keysSpread * energy.keys + hookSpread * energy.hook
+}
+
+/** Overall brightness pulse for the point material */
+export function computeVisualPulse(
+  energy: VisualEnergyState,
+  time: number,
+  beatSpeed: number,
+): number {
+  const tempo = 0.65 + beatSpeed * 1.35
+  const breathe = 0.04 * Math.sin(time * 1.4 * tempo)
+  return (
+    1 +
+    breathe +
+    energy.kick * 0.12 +
+    energy.snare * 0.08 +
+    energy.hook * 0.06
+  )
 }

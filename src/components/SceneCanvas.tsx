@@ -5,13 +5,20 @@ import { useRef, useMemo, useEffect, memo } from "react"
 import { Canvas, useFrame } from "@react-three/fiber"
 import { OrbitControls } from "@react-three/drei"
 import { useEmotionAudio } from "@/hooks/useEmotionAudio"
+import { getEmotionVisualTint } from "@/lib/visual/emotionVisualPalette"
 import {
   applyVisualEvent,
   computeDecomposedPointVisual,
+  computeVisualPulse,
   createVisualEnergyState,
   decayVisualEnergy,
 } from "@/lib/visual/visualEnergy"
 import type { WavePointsProps } from "@/types"
+
+const GRID_SEGMENTS = 128
+const GRID_SIZE = 15
+const POINT_COUNT = (GRID_SEGMENTS + 1) * (GRID_SEGMENTS + 1)
+const COLOR_LERP = 0.24
 
 const WavePoints = memo(
   ({ intensity, beatSpeed, isAudioEnabled, samplesReady, emotion }: WavePointsProps) => {
@@ -19,6 +26,11 @@ const WavePoints = memo(
     const geometryRef = useRef<THREE.BufferGeometry>(null)
     const energyRef = useRef(createVisualEnergyState())
     const intensityRef = useRef(0)
+    const beatSpeedRef = useRef(0.5)
+    const isAudioEnabledRef = useRef(false)
+    const emotionRef = useRef("")
+    const baseXZ = useRef<Float32Array | null>(null)
+    const smoothedColors = useRef<Float32Array | null>(null)
 
     useEmotionAudio({
       emotion,
@@ -36,80 +48,121 @@ const WavePoints = memo(
     }, [intensity])
 
     useEffect(() => {
+      beatSpeedRef.current = beatSpeed
+    }, [beatSpeed])
+
+    useEffect(() => {
+      isAudioEnabledRef.current = isAudioEnabled
+    }, [isAudioEnabled])
+
+    useEffect(() => {
+      emotionRef.current = emotion
+    }, [emotion])
+
+    useEffect(() => {
       if (!isAudioEnabled) {
         energyRef.current = createVisualEnergyState()
       }
     }, [isAudioEnabled])
 
     const geometry = useMemo(() => {
-      const size = 15
-      const segments = 128
-      const points: number[] = []
-      const colors: number[] = []
+      const positions = new Float32Array(POINT_COUNT * 3)
+      const colors = new Float32Array(POINT_COUNT * 3)
+      const xz = new Float32Array(POINT_COUNT * 2)
 
-      for (let i = 0; i <= segments; i++) {
-        for (let j = 0; j <= segments; j++) {
-          const x = (i / segments - 0.5) * size
-          const y = (j / segments - 0.5) * size
-          points.push(x, 0, y)
-          colors.push(1, 1, 1)
+      let index = 0
+      for (let i = 0; i <= GRID_SEGMENTS; i++) {
+        for (let j = 0; j <= GRID_SEGMENTS; j++) {
+          const x = (i / GRID_SEGMENTS - 0.5) * GRID_SIZE
+          const z = (j / GRID_SEGMENTS - 0.5) * GRID_SIZE
+          const pointIndex = index * 3
+          const xzIndex = index * 2
+
+          positions[pointIndex] = x
+          positions[pointIndex + 1] = 0
+          positions[pointIndex + 2] = z
+
+          xz[xzIndex] = x
+          xz[xzIndex + 1] = z
+
+          colors[pointIndex] = 0.55
+          colors[pointIndex + 1] = 0.7
+          colors[pointIndex + 2] = 1
+          index++
         }
       }
 
+      baseXZ.current = xz
+      smoothedColors.current = colors.slice()
+
       const bufferGeometry = new THREE.BufferGeometry()
-      bufferGeometry.setAttribute(
-        "position",
-        new THREE.Float32BufferAttribute(points, 3),
-      )
-      bufferGeometry.setAttribute(
-        "color",
-        new THREE.Float32BufferAttribute(colors, 3),
-      )
+      bufferGeometry.setAttribute("position", new THREE.BufferAttribute(positions, 3))
+      bufferGeometry.setAttribute("color", new THREE.BufferAttribute(colors, 3))
       return bufferGeometry
     }, [])
 
-    useFrame(() => {
-      if (!geometryRef.current) return
+    useFrame(({ clock }) => {
+      if (!geometryRef.current || !baseXZ.current || !smoothedColors.current) return
 
-      const positions = geometryRef.current.attributes.position.array
-      const colors = geometryRef.current.attributes.color.array
+      const positions = geometryRef.current.attributes.position.array as Float32Array
+      const colors = geometryRef.current.attributes.color.array as Float32Array
+      const smoothed = smoothedColors.current
+      const xz = baseXZ.current
 
       decayVisualEnergy(energyRef.current)
       const energy = energyRef.current
-      const intensityValue = intensityRef.current
+      const motion = {
+        time: clock.getElapsedTime(),
+        beatSpeed: beatSpeedRef.current,
+        intensity: intensityRef.current,
+        isAudioEnabled: isAudioEnabledRef.current,
+        emotionTint: getEmotionVisualTint(emotionRef.current),
+      }
 
-      for (let i = 0; i < positions.length; i += 3) {
-        const x = positions[i]
-        const z = positions[i + 2]
+      for (let index = 0; index < POINT_COUNT; index++) {
+        const x = xz[index * 2]
+        const z = xz[index * 2 + 1]
+        const positionIndex = index * 3
+        const colorIndex = positionIndex
 
         const { height, r, g, b } = computeDecomposedPointVisual(
           x,
           z,
           energy,
-          intensityValue,
+          motion,
         )
 
-        positions[i + 1] = height
+        positions[positionIndex + 1] = height
 
-        const colorIndex = (i / 3) * 3
-        colors[colorIndex] = r
-        colors[colorIndex + 1] = g
-        colors[colorIndex + 2] = b
+        smoothed[colorIndex] += (r - smoothed[colorIndex]) * COLOR_LERP
+        smoothed[colorIndex + 1] += (g - smoothed[colorIndex + 1]) * COLOR_LERP
+        smoothed[colorIndex + 2] += (b - smoothed[colorIndex + 2]) * COLOR_LERP
+
+        colors[colorIndex] = smoothed[colorIndex]
+        colors[colorIndex + 1] = smoothed[colorIndex + 1]
+        colors[colorIndex + 2] = smoothed[colorIndex + 2]
       }
 
       geometryRef.current.attributes.position.needsUpdate = true
       geometryRef.current.attributes.color.needsUpdate = true
+
+      const material = pointsRef.current?.material
+      if (material instanceof THREE.PointsMaterial) {
+        material.size = 0.042 * computeVisualPulse(energy, motion.time, motion.beatSpeed)
+        material.opacity = isAudioEnabledRef.current ? 0.95 : 0.72
+      }
     })
 
     return (
       <points ref={pointsRef}>
         <primitive object={geometry} ref={geometryRef} />
         <pointsMaterial
-          size={0.05}
+          size={0.042}
           sizeAttenuation
           transparent
-          opacity={1}
+          opacity={0.95}
           vertexColors
+          toneMapped
         />
       </points>
     )
@@ -132,7 +185,10 @@ export default function SceneCanvas({
       className="h-full w-full"
       camera={{ position: [0, 0, 20], fov: 30 }}
       onContextMenu={(event) => event.preventDefault()}
+      gl={{ antialias: true, alpha: false }}
     >
+      <color attach="background" args={["#02040a"]} />
+      <fog attach="fog" args={["#02040a", 14, 32]} />
       <OrbitControls
         enablePan={false}
         minAzimuthAngle={0}
@@ -142,8 +198,9 @@ export default function SceneCanvas({
         maxDistance={30}
         minDistance={6}
       />
-      <ambientLight intensity={1} />
-      <pointLight position={[20, 20, 20]} />
+      <ambientLight intensity={0.35} />
+      <pointLight position={[12, 18, 14]} intensity={0.8} color="#9ec5ff" />
+      <pointLight position={[-10, -6, 8]} intensity={0.35} color="#ffb8e8" />
       <WavePoints
         intensity={intensity}
         beatSpeed={beatSpeed}
