@@ -10,6 +10,7 @@ export interface WavePointsProps {
   intensity: number
   beatSpeed: number
   isAudioEnabled: boolean
+  samplesReady: boolean
   emotion: string
 }
 
