@@ -4,7 +4,7 @@ import * as Tone from "tone"
 import dynamic from "next/dynamic"
 import { useEffect, useState, useCallback } from "react"
 import EmotionInput from "./EmotionInput"
-import GitHubButton from "./GitHubButton"
+import AppChrome from "./AppChrome"
 import { emotionTimings, emotionRegulationTargets } from "@/configs/emotions"
 import { loadAudioSamples } from "@/hooks/useEmotionAudio"
 import type { SceneCanvasProps } from "./SceneCanvas"
@@ -13,17 +13,6 @@ const SceneCanvas = dynamic(() => import("./SceneCanvas"), {
   ssr: false,
   loading: () => <div className="h-full w-full bg-black" aria-hidden />,
 })
-
-const AppChrome = () => {
-  return (
-    <div className="absolute top-3 right-3 left-3 z-10 flex items-center justify-between">
-      <h1 className="rounded-xl border border-white/10 bg-black/55 px-3 py-1.5 text-lg font-semibold backdrop-blur-md">
-        Emotion Soundscape
-      </h1>
-      <GitHubButton />
-    </div>
-  )
-}
 
 const VisualResponse = () => {
   const defaultBeatSpeed = 0.5
@@ -124,7 +113,7 @@ const VisualResponse = () => {
 
   return (
     <div className="relative flex h-full w-screen flex-col items-center justify-center text-white">
-      <AppChrome />
+      <AppChrome immersed={isAudioEnabled} />
       {isMounted ? (
         <SceneCanvas {...sceneProps} />
       ) : (

@@ -66,7 +66,7 @@ const EmotionInput = ({
         {showControls ? (
           <motion.div
             key="controls-dock"
-            className="pointer-events-auto flex w-full max-w-md flex-col gap-4 rounded-xl border border-white/12 bg-black/55 p-4 shadow-[0_16px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:max-w-lg"
+            className="pointer-events-auto flex w-full max-w-md flex-col gap-4 rounded-xl border border-white/12 bg-black/55 p-4 shadow-[0_16px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl"
             initial={{ opacity: 0, y: 48 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: 48 }}
