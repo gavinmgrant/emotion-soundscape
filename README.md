@@ -1,35 +1,41 @@
 # Emotion Soundscape
 
-A meditative, interactive web experience that combines sound and visuals to create an immersive emotional journey.
+A meditative, interactive web experience that turns how you feel into a progressive-house soundscape and a synchronized 3D wavefield.
 
 ![Emotion Soundscape UI](./public/screenshot.webp)
 
 ## Overview
 
-Emotion Soundscape is a single-page web application built with Next.js, Tone.js, and React Three Fiber. It invites users to select an emotion and be immersed in a pulsing world of synchronized sound and visuals. The experience creates a meditative space where users can explore different emotional states through interactive audio-visual feedback.
+Emotion Soundscape is a single-page Next.js app. You pick an emotion, and the app builds a looping arrangement aimed at a regulation target — for example, anger → calm, sadness → hope, fear → safety. Tone.js drives layered audio (drums, bass, pads, piano stabs, hooks), while React Three Fiber renders a point-cloud wavefield that reacts to each musical layer in real time.
 
 ## Features
 
-- **Emotion Selection**: Choose from various emotions to trigger different soundscapes
-- **Real-time Audio-Visual Synchronization**: Sound and visuals pulse together in harmony
-- **Interactive Controls**: Adjust intensity and beat speed to customize your experience
-- **Responsive Design**: Works on both desktop and mobile devices
-- **Immersive 3D Visualization**: Dynamic wave patterns that respond to the selected emotion
+- **16 emotions** with searchable selection: happiness, sadness, fear, anxious, stress, anger, surprise, disgust, love, guilt, pride, jealousy, hope, embarrassment, relief, gratitude
+- **Emotion regulation targets** — each emotion maps to a labeled goal (e.g. “Helping you feel calm”) that shapes the arrangement
+- **Progressive house production** — intro → build → drop → breakdown with sidechain, filters, and layered voices
+- **Sample-backed audio** — piano sampler plus drum samples, with synthesized 808 kick/clap
+- **Audio–visual sync** — kick, snare, hats, bass, keys, pad, and hook each drive the wavefield’s energy and color
+- **Emotion color palettes** — per-emotion tints on the wavefield and control accents
+- **Live controls** — intensity and tempo sliders, play/pause, collapsible control dock
+- **Keyboard shortcut** — Space toggles audio (when focus is not in a text field)
+- **Immersive chrome** — header fades while audio plays; hover or focus reveals it again
+- **Responsive layout** — full-viewport experience with safe-area padding on mobile
 
 ## Technical Stack
 
-- **Frontend Framework**: Next.js with React
-- **Audio Engine**: Tone.js for sound synthesis and sequencing
-- **3D Rendering**: React Three Fiber (Three.js) for visual effects
-- **Styling**: Tailwind CSS for responsive design
-- **State Management**: React Context API for sharing state between components
+| Layer | Tools |
+| --- | --- |
+| App | Next.js 15 (App Router), React 19, TypeScript |
+| Audio | Tone.js, custom arrangement / voice / drum kit builders |
+| Visuals | React Three Fiber, Drei, Three.js |
+| UI | Tailwind CSS 4, shadcn/ui (Radix), Motion, Lucide |
 
 ## Getting Started
 
 ### Prerequisites
 
-- Node.js (v14 or higher)
-- npm or yarn
+- Node.js 18.18 or newer (Next.js 15)
+- npm
 
 ### Installation
 
@@ -44,56 +50,61 @@ Emotion Soundscape is a single-page web application built with Next.js, Tone.js,
 
    ```bash
    npm install
-   # or
-   yarn install
    ```
 
-3. Run the development server:
+3. Start the development server (Turbopack):
 
    ```bash
    npm run dev
-   # or
-   yarn dev
    ```
 
-4. Open [http://localhost:3000](http://localhost:3000) in your browser to see the application.
+4. Open [http://localhost:3000](http://localhost:3000).
+
+### Scripts
+
+| Command | Description |
+| --- | --- |
+| `npm run dev` | Development server with Turbopack |
+| `npm run build` | Production build |
+| `npm start` | Serve the production build |
+| `npm run lint` | Run ESLint |
 
 ## Usage
 
-1. Select an emotion from the dropdown menu
-2. Toggle audio on/off using the audio control
-3. Adjust intensity and beat speed sliders to customize the experience
-4. Observe the synchronized wave patterns that respond to your selections
+1. Choose an emotion from the searchable control dock.
+2. Audio starts after samples load; the regulation label appears above the picker.
+3. Use play/pause (or Space) to toggle sound.
+4. Adjust **Intensity** and **Tempo** to reshape the mix and motion without rebuilding the song.
+5. Collapse the dock for a fuller view of the wavefield; the header fades while immersed.
 
 ## Project Structure
 
-- `/src/components`: React components including VisualResponse, SoundResponse, and WavePoints
-- `/src/contexts`: React contexts for state management (PulseContext)
-- `/src/configs`: Configuration files for emotion sequences and timings
-- `/src/lib`: Utility functions and audio helpers
-- `/src/types`: Type definitions for components and data structures
-
-## License
-
-This project is licensed under the MIT License - see the LICENSE file for details.
+```
+src/
+├── app/                 # Next.js App Router (layout, page, styles)
+├── components/
+│   ├── AppChrome.tsx    # Title + GitHub link
+│   ├── EmotionInput.tsx # Emotion picker, transport, sliders
+│   ├── SceneCanvas.tsx  # R3F canvas + wavefield
+│   ├── VisualResponse.tsx
+│   └── ui/              # shadcn/ui primitives
+├── configs/
+│   └── emotions.ts      # Emotion list, audio configs, regulation targets
+├── hooks/
+│   └── useEmotionAudio.ts
+├── lib/
+│   ├── audio/           # Arrangement, voices, drums, samples, profiles
+│   └── visual/          # Color palettes, energy → geometry mapping
+└── types/
+public/
+├── samples/             # Drum one-shots (and related assets)
+├── screenshot.webp
+└── og.webp
+```
 
 ## Acknowledgments
 
-- [Tone.js](https://tonejs.github.io/) for audio synthesis
+- [Tone.js](https://tonejs.github.io/) for audio synthesis and sequencing
 - [React Three Fiber](https://github.com/pmndrs/react-three-fiber) for 3D rendering
 - [Next.js](https://nextjs.org/) for the React framework
-
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- [shadcn/ui](https://ui.shadcn.com/) for accessible UI primitives
