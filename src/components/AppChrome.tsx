@@ -14,7 +14,7 @@ const AppChrome = ({ immersed }: AppChromeProps) => {
       className={cn(
         "group/chrome absolute top-0 right-0 left-0 z-10 flex items-start justify-between px-4 pt-4 pb-10 transition-opacity duration-500",
         immersed
-          ? "opacity-0 hover:opacity-100 focus-within:opacity-100 [@media(hover:none)]:opacity-35"
+          ? "pointer-events-none opacity-0 [@media(hover:hover)]:pointer-events-auto [@media(hover:hover)]:hover:opacity-100 [@media(hover:hover)]:focus-within:opacity-100"
           : "opacity-100",
       )}
     >
