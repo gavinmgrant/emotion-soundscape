@@ -193,8 +193,9 @@ export default function SceneCanvas({
         enablePan={false}
         minAzimuthAngle={0}
         maxAzimuthAngle={0}
+        // 0 = top-down; π/2 = edge / horizontal line — never flip under the plane
         minPolarAngle={0}
-        maxPolarAngle={Math.PI}
+        maxPolarAngle={Math.PI / 2}
         maxDistance={24}
         minDistance={6}
       />

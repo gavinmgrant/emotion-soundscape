@@ -4,11 +4,16 @@ import { Button } from "@/components/ui/button"
 
 const GitHubButton = () => {
   return (
-    <Button size="icon" asChild>
+    <Button
+      size="icon"
+      asChild
+      className="border border-white/10 bg-black/55 text-white backdrop-blur-md hover:bg-white/10"
+    >
       <a
         href="https://github.com/gavinmgrant/emotion-soundscape"
         target="_blank"
         rel="noopener noreferrer"
+        aria-label="View source on GitHub"
       >
         <svg
           xmlns="http://www.w3.org/2000/svg"
