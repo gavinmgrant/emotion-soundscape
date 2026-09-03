@@ -4,7 +4,7 @@ import { useId, useState, type ReactNode } from "react"
 import { AnimatePresence, motion } from "motion/react"
 import { Slider } from "@/components/ui/slider"
 import { Button } from "@/components/ui/button"
-import { Check, ChevronsUpDown, Gauge, Loader2, Pause, Play, Volume2 } from "lucide-react"
+import { Check, ChevronsDown, ChevronsUpDown, Gauge, Loader2, Pause, Play, SlidersHorizontal, Volume2 } from "lucide-react"
 import { emotions } from "@/configs/emotions"
 import { cn } from "@/lib/utils"
 import {
@@ -52,6 +52,7 @@ const EmotionInput = ({
   setBeatSpeed,
   onEmotionChange,
   showControls,
+  onToggleControls,
 }: EmotionInputProps) => {
   const [open, setOpen] = useState(false)
   const intensityId = useId()
@@ -60,22 +61,36 @@ const EmotionInput = ({
   const accent = emotion ? tintToCss(emotion) : "rgb(255 255 255)"
 
   return (
-    <AnimatePresence initial={false}>
-      {showControls && (
-        <motion.div
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]"
-          initial={{ opacity: 0, y: 48 }}
-          animate={{ opacity: 1, y: 0 }}
-          exit={{ opacity: 0, y: 48 }}
-          transition={{ duration: 0.25 }}
-        >
-          <div className="pointer-events-auto flex w-full max-w-md flex-col gap-4 rounded-xl border border-white/12 bg-black/55 p-4 shadow-[0_16px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:max-w-lg">
-            <p
-              className="min-h-5 text-center text-sm text-white/70"
-              aria-live="polite"
-            >
-              {regulationLabel ?? "Choose an emotion to begin"}
-            </p>
+    <div className="pointer-events-none absolute inset-x-0 bottom-0 z-10 flex justify-center p-3 pb-[max(0.75rem,env(safe-area-inset-bottom))]">
+      <AnimatePresence mode="wait" initial={false}>
+        {showControls ? (
+          <motion.div
+            key="controls-dock"
+            className="pointer-events-auto flex w-full max-w-md flex-col gap-4 rounded-xl border border-white/12 bg-black/55 p-4 shadow-[0_16px_50px_rgba(0,0,0,0.45)] backdrop-blur-xl sm:max-w-lg"
+            initial={{ opacity: 0, y: 48 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 48 }}
+            transition={{ duration: 0.25 }}
+          >
+            <div className="grid grid-cols-[2.25rem_1fr_2.25rem] items-center gap-2">
+              <span aria-hidden className="size-9" />
+              <p
+                className="min-h-5 truncate text-center text-sm text-white/70"
+                aria-live="polite"
+              >
+                {regulationLabel ?? "Choose an emotion to begin"}
+              </p>
+              <Button
+                type="button"
+                size="icon"
+                onClick={onToggleControls}
+                aria-label="Hide controls"
+                title="Hide controls"
+                className="size-9 border border-white/10 bg-white/10 text-white hover:bg-white/15"
+              >
+                <ChevronsDown className="size-4" />
+              </Button>
+            </div>
 
             <div className="flex items-center gap-3">
               <Button
@@ -132,7 +147,9 @@ const EmotionInput = ({
                         aria-hidden
                         className="size-2.5 shrink-0 rounded-full"
                         style={{
-                          backgroundColor: emotion ? accent : "rgb(255 255 255 / 0.35)",
+                          backgroundColor: emotion
+                            ? accent
+                            : "rgb(255 255 255 / 0.35)",
                         }}
                       />
                       <span className="truncate">
@@ -215,10 +232,30 @@ const EmotionInput = ({
                 onValueChange={(next) => setBeatSpeed([next])}
               />
             </div>
-          </div>
-        </motion.div>
-      )}
-    </AnimatePresence>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="controls-reveal"
+            className="pointer-events-auto"
+            initial={{ opacity: 0, y: 24 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: 24 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Button
+              type="button"
+              onClick={onToggleControls}
+              aria-label="Show controls"
+              title="Show controls"
+              className="h-11 gap-2 rounded-xl border border-white/12 bg-black/55 px-4 text-white backdrop-blur-xl hover:bg-white/10"
+            >
+              <SlidersHorizontal className="size-4" />
+              Controls
+            </Button>
+          </motion.div>
+        )}
+      </AnimatePresence>
+    </div>
   )
 }
 

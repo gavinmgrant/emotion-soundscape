@@ -5,11 +5,8 @@ import dynamic from "next/dynamic"
 import { useEffect, useState, useCallback } from "react"
 import EmotionInput from "./EmotionInput"
 import GitHubButton from "./GitHubButton"
-import { Button } from "@/components/ui/button"
-import { ChevronsDown, SlidersHorizontal } from "lucide-react"
 import { emotionTimings, emotionRegulationTargets } from "@/configs/emotions"
 import { loadAudioSamples } from "@/hooks/useEmotionAudio"
-import type { ControlsToggleProps } from "@/types"
 import type { SceneCanvasProps } from "./SceneCanvas"
 
 const SceneCanvas = dynamic(() => import("./SceneCanvas"), {
@@ -17,25 +14,13 @@ const SceneCanvas = dynamic(() => import("./SceneCanvas"), {
   loading: () => <div className="h-full w-full bg-black" aria-hidden />,
 })
 
-const ControlsToggle = ({ showControls, onToggle }: ControlsToggleProps) => {
+const AppChrome = () => {
   return (
     <div className="absolute top-3 right-3 left-3 z-10 flex items-center justify-between">
       <h1 className="rounded-xl border border-white/10 bg-black/55 px-3 py-1.5 text-lg font-semibold backdrop-blur-md">
         Emotion Soundscape
       </h1>
-      <div className="flex items-center gap-2">
-        <Button
-          size="icon"
-          onClick={onToggle}
-          aria-pressed={showControls}
-          aria-label={showControls ? "Hide controls" : "Show controls"}
-          title={showControls ? "Hide controls" : "Show controls"}
-          className="border border-white/10 bg-black/55 text-white backdrop-blur-md hover:bg-white/10"
-        >
-          {showControls ? <ChevronsDown /> : <SlidersHorizontal />}
-        </Button>
-        <GitHubButton />
-      </div>
+      <GitHubButton />
     </div>
   )
 }
@@ -139,10 +124,7 @@ const VisualResponse = () => {
 
   return (
     <div className="relative flex h-full w-screen flex-col items-center justify-center text-white">
-      <ControlsToggle
-        showControls={showControls}
-        onToggle={() => setShowControls(!showControls)}
-      />
+      <AppChrome />
       {isMounted ? (
         <SceneCanvas {...sceneProps} />
       ) : (
@@ -162,6 +144,7 @@ const VisualResponse = () => {
         setBeatSpeed={setBeatSpeed}
         onEmotionChange={handleEmotionChange}
         showControls={showControls}
+        onToggleControls={() => setShowControls((visible) => !visible)}
       />
     </div>
   )

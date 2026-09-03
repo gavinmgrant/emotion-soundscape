@@ -41,4 +41,5 @@ export interface EmotionInputProps {
   setBeatSpeed: (e: number[]) => void
   onEmotionChange: (emotion: string) => void
   showControls: boolean
+  onToggleControls: () => void
 }
